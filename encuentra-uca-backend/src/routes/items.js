@@ -1,0 +1,114 @@
+const express = require('express');
+const db = require('../db/database');
+const { authMiddleware } = require('../middleware/auth');
+
+const router = express.Router();
+
+// GET /items - lista todos los objetos, opcionalmente filtrados por categoría
+router.get('/', (req, res) => {
+  try {
+    const { category } = req.query;
+
+    let items;
+    if (category) {
+      items = db.prepare('SELECT * FROM items WHERE category = ? ORDER BY timestamp DESC').all(category);
+    } else {
+      items = db.prepare('SELECT * FROM items ORDER BY timestamp DESC').all();
+    }
+
+    res.json(items);
+  } catch (error) {
+    console.error('Error en GET /items:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// GET /items/:id - detalle de un objeto
+router.get('/:id', (req, res) => {
+  try {
+    const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ error: 'Objeto no encontrado' });
+    }
+
+    res.json(item);
+  } catch (error) {
+    console.error('Error en GET /items/:id:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// POST /items - crear un nuevo objeto (requiere autenticación)
+router.post('/', authMiddleware, (req, res) => {
+  try {
+    const { title, description, category, imageUrl, location } = req.body;
+
+    if (!title || !description || !category || !location) {
+      return res.status(400).json({
+        error: 'Faltan campos requeridos: title, description, category, location'
+      });
+    }
+
+    const timestamp = Date.now();
+
+    const result = db.prepare(
+      `INSERT INTO items (title, description, category, imageUrl, location, foundById, foundByEmail, status, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?)`
+    ).run(title, description, category, imageUrl || '', location, req.user.id, req.user.email, timestamp);
+
+    const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
+
+    res.status(201).json(newItem);
+  } catch (error) {
+    console.error('Error en POST /items:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// PATCH /items/:id/status - actualizar estado (ej. marcar como reclamado)
+router.patch('/:id/status', authMiddleware, (req, res) => {
+  try {
+    const { status } = req.body;
+
+    if (!status || !['available', 'claimed'].includes(status)) {
+      return res.status(400).json({ error: "status debe ser 'available' o 'claimed'" });
+    }
+
+    const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'Objeto no encontrado' });
+    }
+
+    db.prepare('UPDATE items SET status = ? WHERE id = ?').run(status, req.params.id);
+
+    const updated = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
+    res.json(updated);
+  } catch (error) {
+    console.error('Error en PATCH /items/:id/status:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// DELETE /items/:id - eliminar un objeto (solo quien lo publicó)
+router.delete('/:id', authMiddleware, (req, res) => {
+  try {
+    const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
+
+    if (!item) {
+      return res.status(404).json({ error: 'Objeto no encontrado' });
+    }
+
+    if (item.foundById !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar este objeto' });
+    }
+
+    db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error en DELETE /items/:id:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+module.exports = router;
