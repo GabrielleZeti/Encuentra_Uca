@@ -4,7 +4,6 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Inicializar Firebase Admin
 let admin;
 try {
   admin = require('firebase-admin');
@@ -12,14 +11,15 @@ try {
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT no definida');
   const serviceAccount = JSON.parse(raw);
   serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-  if (!admin.apps.length) {
+  const apps = admin.apps || [];
+  if (apps.length === 0) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
     console.log('Firebase Admin inicializado correctamente');
   }
 } catch (e) {
-  console.warn('Firebase Admin no configurado. Error completo:', e);
+  console.warn('Firebase Admin no configurado. Error:', e.message);
   admin = null;
 }
 
