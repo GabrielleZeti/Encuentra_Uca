@@ -4,34 +4,35 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-let admin;
+let messaging = null;
 try {
-  admin = require('firebase-admin');
-  console.log('firebase-admin cargado, tipo de apps:', typeof admin.apps, JSON.stringify(admin.apps));
+  const { initializeApp, cert, getApps } = require('firebase-admin/app');
+  const { getMessaging } = require('firebase-admin/messaging');
+  
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT no definida');
   const serviceAccount = JSON.parse(raw);
   serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
-  const apps = admin.apps || [];
-  if (apps.length === 0) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    console.log('Firebase Admin inicializado correctamente');
+  
+  if (getApps().length === 0) {
+    initializeApp({ credential: cert(serviceAccount) });
   }
+  
+  messaging = getMessaging();
+  console.log('Firebase Admin inicializado correctamente');
 } catch (e) {
   console.warn('Firebase Admin no configurado. Error:', e.message);
-  admin = null;
+  messaging = null;
 }
 
 // Función para enviar notificación FCM
 async function sendNewItemNotification(item) {
-  if (!admin) {
-    console.log('FCM omitido: admin no inicializado');
+  if (!messaging) {
+    console.log('FCM omitido: messaging no inicializado');
     return;
   }
   try {
-    await admin.messaging().send({
+    await messaging.send({
       notification: {
         title: '¡Nuevo objeto encontrado!',
         body: `${item.title} encontrado en ${item.location}`
