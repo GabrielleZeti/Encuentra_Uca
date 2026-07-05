@@ -8,20 +8,27 @@ const router = express.Router();
 let admin;
 try {
   admin = require('firebase-admin');
-  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT no definida');
+  const serviceAccount = JSON.parse(raw);
   serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
     });
+    console.log('Firebase Admin inicializado correctamente');
   }
 } catch (e) {
   console.warn('Firebase Admin no configurado:', e.message);
+  admin = null;
 }
 
 // Función para enviar notificación FCM
 async function sendNewItemNotification(item) {
-  if (!admin || !admin.apps.length) return;
+  if (!admin) {
+    console.log('FCM omitido: admin no inicializado');
+    return;
+  }
   try {
     await admin.messaging().send({
       notification: {
@@ -30,9 +37,9 @@ async function sendNewItemNotification(item) {
       },
       topic: 'new_items'
     });
-    console.log('Notificación enviada');
+    console.log('Notificación FCM enviada');
   } catch (error) {
-    console.error('Error enviando notificación:', error.message);
+    console.error('Error enviando notificación FCM:', error.message);
   }
 }
 
@@ -87,9 +94,11 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
 
+    // Responder primero, luego notificar
     res.status(201).json(newItem);
 
-    sendNewItemNotification(newItem).catch(err => 
+    // Enviar notificación sin bloquear la respuesta
+    sendNewItemNotification(newItem).catch(err =>
       console.error('Error FCM:', err.message)
     );
 
