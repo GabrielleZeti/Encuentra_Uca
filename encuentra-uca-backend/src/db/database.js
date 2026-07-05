@@ -1,9 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const db = new Database(
-  process.env.DB_PATH || path.join(__dirname, '..', '..', 'encuentra_uca.db')
-);
+const db = new Database(process.env.DB_PATH || path.join(__dirname, '..', '..', 'encuentra_uca.db'));
 
 db.pragma('journal_mode = WAL');
 
