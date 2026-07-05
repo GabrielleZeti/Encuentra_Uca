@@ -7,6 +7,7 @@ const router = express.Router();
 let admin;
 try {
   admin = require('firebase-admin');
+  console.log('firebase-admin cargado, tipo de apps:', typeof admin.apps, JSON.stringify(admin.apps));
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) throw new Error('FIREBASE_SERVICE_ACCOUNT no definida');
   const serviceAccount = JSON.parse(raw);
