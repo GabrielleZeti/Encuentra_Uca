@@ -9,6 +9,7 @@ let admin;
 try {
   admin = require('firebase-admin');
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
   if (!admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount)
@@ -86,10 +87,12 @@ router.post('/', authMiddleware, async (req, res) => {
 
     const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
 
-    // Enviar notificación FCM
-    await sendNewItemNotification(newItem);
-
     res.status(201).json(newItem);
+
+    sendNewItemNotification(newItem).catch(err => 
+      console.error('Error FCM:', err.message)
+    );
+
   } catch (error) {
     console.error('Error en POST /items:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
