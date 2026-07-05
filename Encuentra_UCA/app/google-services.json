@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "143458578471",
+    "project_id": "encuentra-uca",
+    "storage_bucket": "encuentra-uca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:143458578471:android:98f33e98f1c8179219de02",
+        "android_client_info": {
+          "package_name": "com.example.encuentra_uca"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBfWMMTSjyCWL0I6jvhIFhGUjX9EtgVOwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

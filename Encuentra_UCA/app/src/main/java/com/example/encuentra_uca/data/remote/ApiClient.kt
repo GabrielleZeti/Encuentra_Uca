@@ -9,9 +9,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object ApiClient {
-    // 10.0.2.2 apunta al localhost de tu PC desde el emulador de Android
-    const val BASE_URL = "http://10.0.2.2:3000"
-
+    const val BASE_URL = "https://encuentrauca-production.up.railway.app"
     val httpClient = HttpClient(Android) {
         install(ContentNegotiation) {
             json(Json {

@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.ksp)
+    id("com.google.gms.google-services") version "4.5.0" apply false
+
 }
 
 android {
@@ -77,4 +79,8 @@ dependencies {
     implementation(libs.androidx.datastore)
 
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
 }
