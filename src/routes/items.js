@@ -4,18 +4,47 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
-// GET /items - lista todos los objetos, opcionalmente filtrados por categoría
+// Inicializar Firebase Admin
+let admin;
+try {
+  admin = require('firebase-admin');
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+  }
+} catch (e) {
+  console.warn('Firebase Admin no configurado:', e.message);
+}
+
+// Función para enviar notificación FCM
+async function sendNewItemNotification(item) {
+  if (!admin || !admin.apps.length) return;
+  try {
+    await admin.messaging().send({
+      notification: {
+        title: '¡Nuevo objeto encontrado!',
+        body: `${item.title} encontrado en ${item.location}`
+      },
+      topic: 'new_items'
+    });
+    console.log('Notificación enviada');
+  } catch (error) {
+    console.error('Error enviando notificación:', error.message);
+  }
+}
+
+// GET /items
 router.get('/', (req, res) => {
   try {
     const { category } = req.query;
-
     let items;
     if (category) {
       items = db.prepare('SELECT * FROM items WHERE category = ? ORDER BY timestamp DESC').all(category);
     } else {
       items = db.prepare('SELECT * FROM items ORDER BY timestamp DESC').all();
     }
-
     res.json(items);
   } catch (error) {
     console.error('Error en GET /items:', error);
@@ -23,15 +52,13 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET /items/:id - detalle de un objeto
+// GET /items/:id
 router.get('/:id', (req, res) => {
   try {
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
-
     if (!item) {
       return res.status(404).json({ error: 'Objeto no encontrado' });
     }
-
     res.json(item);
   } catch (error) {
     console.error('Error en GET /items/:id:', error);
@@ -39,8 +66,8 @@ router.get('/:id', (req, res) => {
   }
 });
 
-// POST /items - crear un nuevo objeto (requiere autenticación)
-router.post('/', authMiddleware, (req, res) => {
+// POST /items
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { title, description, category, imageUrl, location } = req.body;
 
@@ -59,6 +86,9 @@ router.post('/', authMiddleware, (req, res) => {
 
     const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
 
+    // Enviar notificación FCM
+    await sendNewItemNotification(newItem);
+
     res.status(201).json(newItem);
   } catch (error) {
     console.error('Error en POST /items:', error);
@@ -66,22 +96,18 @@ router.post('/', authMiddleware, (req, res) => {
   }
 });
 
-// PATCH /items/:id/status - actualizar estado (ej. marcar como reclamado)
+// PATCH /items/:id/status
 router.patch('/:id/status', authMiddleware, (req, res) => {
   try {
     const { status } = req.body;
-
     if (!status || !['available', 'claimed'].includes(status)) {
       return res.status(400).json({ error: "status debe ser 'available' o 'claimed'" });
     }
-
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
     if (!item) {
       return res.status(404).json({ error: 'Objeto no encontrado' });
     }
-
     db.prepare('UPDATE items SET status = ? WHERE id = ?').run(status, req.params.id);
-
     const updated = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
     res.json(updated);
   } catch (error) {
@@ -90,19 +116,16 @@ router.patch('/:id/status', authMiddleware, (req, res) => {
   }
 });
 
-// DELETE /items/:id - eliminar un objeto (solo quien lo publicó)
+// DELETE /items/:id
 router.delete('/:id', authMiddleware, (req, res) => {
   try {
     const item = db.prepare('SELECT * FROM items WHERE id = ?').get(req.params.id);
-
     if (!item) {
       return res.status(404).json({ error: 'Objeto no encontrado' });
     }
-
     if (item.foundById !== req.user.id) {
       return res.status(403).json({ error: 'No tienes permiso para eliminar este objeto' });
     }
-
     db.prepare('DELETE FROM items WHERE id = ?').run(req.params.id);
     res.status(204).send();
   } catch (error) {
