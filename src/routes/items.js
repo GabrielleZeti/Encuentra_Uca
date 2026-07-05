@@ -19,7 +19,7 @@ try {
     console.log('Firebase Admin inicializado correctamente');
   }
 } catch (e) {
-  console.warn('Firebase Admin no configurado:', e.message);
+  console.warn('Firebase Admin no configurado. Error completo:', e);
   admin = null;
 }
 
