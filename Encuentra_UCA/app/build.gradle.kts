@@ -82,5 +82,6 @@ dependencies {
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
-    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-messaging")
+
 }

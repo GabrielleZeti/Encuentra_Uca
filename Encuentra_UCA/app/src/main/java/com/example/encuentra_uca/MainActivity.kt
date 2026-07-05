@@ -7,11 +7,20 @@ import androidx.activity.enableEdgeToEdge
 import com.example.encuentra_uca.ui.AppViewModelFactory
 import com.example.encuentra_uca.ui.navigation.AppNavGraph
 import com.example.encuentra_uca.ui.theme.Encuentra_UCATheme
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        FirebaseMessaging.getInstance().subscribeToTopic("new_items")
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    android.util.Log.d("FCM", "Suscrito a new_items")
+                }
+            }
+
         setContent {
             Encuentra_UCATheme {
                 AppNavGraph(
