@@ -36,7 +36,7 @@ class AppViewModelFactory(private val context: Context) : ViewModelProvider.Fact
             modelClass.isAssignableFrom(HomeViewModel::class.java) ->
                 HomeViewModel(itemRepository) as T
             modelClass.isAssignableFrom(DetailViewModel::class.java) ->
-                DetailViewModel(itemRepository) as T
+                DetailViewModel(itemRepository, tokenManager) as T
             modelClass.isAssignableFrom(PublishViewModel::class.java) ->
                 PublishViewModel(itemRepository, tokenManager) as T
             modelClass.isAssignableFrom(ProfileViewModel::class.java) ->

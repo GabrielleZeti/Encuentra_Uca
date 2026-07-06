@@ -9,6 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,11 +21,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,9 +45,35 @@ fun DetailScreen(
 ) {
     val viewModel: DetailViewModel = viewModel(factory = viewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
+    }
+
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) onBack()
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Eliminar objeto") },
+            text = { Text("¿Estás seguro que deseas eliminar este objeto? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    viewModel.deleteItem()
+                }) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -58,14 +91,13 @@ fun DetailScreen(
             )
         }
     ) { paddingValues ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
             when {
-                uiState.isLoading -> {
+                uiState.isLoading || uiState.isDeleting -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
@@ -117,9 +149,21 @@ fun DetailScreen(
                             }
                         }
 
-                        InfoRow(label = "Descripcion", value = item.description)
-                        InfoRow(label = "Ubicacion", value = item.location)
+                        InfoRow(label = "Descripción", value = item.description)
+                        InfoRow(label = "Ubicación", value = item.location)
                         InfoRow(label = "Reportado por", value = item.foundByEmail)
+
+                        if (uiState.isOwner) {
+                            Button(
+                                onClick = { showDeleteDialog = true },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.error
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Eliminar objeto")
+                            }
+                        }
                     }
                 }
             }

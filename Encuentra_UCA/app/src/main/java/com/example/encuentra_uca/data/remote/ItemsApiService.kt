@@ -3,6 +3,7 @@ package com.example.encuentra_uca.data.remote
 import com.example.encuentra_uca.data.remote.dto.CreateItemRequest
 import com.example.encuentra_uca.data.remote.dto.ItemDto
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -30,5 +31,11 @@ class ItemsApiService {
             header("Authorization", "Bearer $token")
             setBody(request)
         }.body()
+    }
+
+    suspend fun deleteItem(token: String, id: Int) {
+        client.delete("$baseUrl/items/$id") {
+            header("Authorization", "Bearer $token")
+        }
     }
 }

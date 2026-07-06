@@ -54,4 +54,14 @@ class ItemRepository(
             Result.failure(e)
         }
     }
+
+    suspend fun deleteItem(token: String, id: Int): Result<Unit> {
+        return try {
+            apiService.deleteItem(token, id)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }
