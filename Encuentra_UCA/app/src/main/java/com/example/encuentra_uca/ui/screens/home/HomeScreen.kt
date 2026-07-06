@@ -40,8 +40,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.encuentra_uca.data.remote.dto.ItemDto
 import com.example.encuentra_uca.ui.AppViewModelFactory
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreen(
     viewModelFactory: AppViewModelFactory,
@@ -51,6 +55,11 @@ fun HomeScreen(
 ) {
     val viewModel: HomeViewModel = viewModel(factory = viewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
+
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = uiState.isLoading,
+        onRefresh = { viewModel.loadItems(uiState.selectedCategory) }
+    )
 
     Scaffold(
         topBar = {
@@ -73,69 +82,81 @@ fun HomeScreen(
         }
     ) { paddingValues ->
 
-        Column(modifier = Modifier.padding(paddingValues)) {
-
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(vertical = 8.dp)
-            ) {
-                items(CATEGORIES) { category ->
-                    val isSelected = when {
-                        category == "Todos" && uiState.selectedCategory == null -> true
-                        category == uiState.selectedCategory -> true
-                        else -> false
-                    }
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onCategorySelected(category) },
-                        label = { Text(category) }
-                    )
-                }
-            }
-
-            when {
-                uiState.isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                uiState.errorMessage != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = uiState.errorMessage ?: "",
-                            color = MaterialTheme.colorScheme.error
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .pullRefresh(pullRefreshState)
+        ) {
+            Column {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    items(CATEGORIES) { category ->
+                        val isSelected = when {
+                            category == "Todos" && uiState.selectedCategory == null -> true
+                            category == uiState.selectedCategory -> true
+                            else -> false
+                        }
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.onCategorySelected(category) },
+                            label = { Text(category) }
                         )
                     }
                 }
 
-                uiState.items.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No hay objetos reportados aún")
+                when {
+                    uiState.isLoading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
-                }
 
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.items) { item ->
-                            ItemCard(item = item, onClick = { onItemClick(item.id) })
+                    uiState.errorMessage != null -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = uiState.errorMessage ?: "",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    uiState.items.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("No hay objetos reportados aún")
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(uiState.items) { item ->
+                                ItemCard(item = item, onClick = { onItemClick(item.id) })
+                            }
                         }
                     }
                 }
             }
+
+            PullRefreshIndicator(
+                refreshing = uiState.isLoading,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }

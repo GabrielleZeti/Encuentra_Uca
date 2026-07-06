@@ -15,12 +15,10 @@ class ItemRepository(
     suspend fun getItems(category: String? = null): Result<List<ItemDto>> {
         return try {
             val remoteItems = apiService.getItems(category)
-
             if (category == null) {
                 itemDao.deleteAll()
                 itemDao.insertAll(remoteItems.map { it.toEntity() })
             }
-
             Result.success(remoteItems)
         } catch (e: Exception) {
             try {
@@ -47,9 +45,17 @@ class ItemRepository(
     suspend fun createItem(token: String, request: CreateItemRequest): Result<ItemDto> {
         return try {
             val newItem = apiService.createItem(token, request)
-            // Guarda el nuevo item en Room
             itemDao.insertAll(listOf(newItem.toEntity()))
             Result.success(newItem)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteItem(token: String, id: Int): Result<Unit> {
+        return try {
+            apiService.deleteItem(token, id)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
