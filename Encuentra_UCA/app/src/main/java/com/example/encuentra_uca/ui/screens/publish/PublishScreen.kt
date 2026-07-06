@@ -81,15 +81,15 @@ fun PublishScreen(
         ) {
             OutlinedTextField(
                 value = uiState.title,
-                onValueChange = viewModel::onTitleChange,
+                onValueChange = { if (it.length <= 60) viewModel.onTitleChange(it) },
                 label = { Text("Nombre del objeto") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = uiState.description,
-                onValueChange = viewModel::onDescriptionChange,
-                label = { Text("Descripcion detallada") },
+                onValueChange = { if (it.length <= 200) viewModel.onDescriptionChange(it) },
+                label = { Text("Descripción detallada") },
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -125,10 +125,9 @@ fun PublishScreen(
                     }
                 }
             }
-
             OutlinedTextField(
                 value = uiState.location,
-                onValueChange = viewModel::onLocationChange,
+                onValueChange = { if (it.length <= 80) viewModel.onLocationChange(it) },
                 label = { Text("Lugar donde fue encontrado") },
                 modifier = Modifier.fillMaxWidth()
             )

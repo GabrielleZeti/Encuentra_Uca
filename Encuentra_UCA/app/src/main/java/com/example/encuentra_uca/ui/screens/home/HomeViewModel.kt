@@ -16,7 +16,7 @@ data class HomeUiState(
     val selectedCategory: String? = null
 )
 
-val CATEGORIES = listOf("Todos", "Electrónicos", "Documentos", "Llaves", "Mochilas", "Ropa", "Otros")
+val CATEGORIES = listOf("Todos", "💻 Electrónicos", "📄 Documentos", "🔑 Llaves", "🎒 Mochilas", "👕 Ropa", "📦 Otros")
 
 class HomeViewModel(
     private val itemRepository: ItemRepository
@@ -32,21 +32,13 @@ class HomeViewModel(
     fun loadItems(category: String? = null) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
             val result = itemRepository.getItems(category)
-
             result.fold(
                 onSuccess = { items ->
-                    _uiState.value = _uiState.value.copy(
-                        items = items,
-                        isLoading = false
-                    )
+                    _uiState.value = _uiState.value.copy(items = items, isLoading = false)
                 },
                 onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Error al cargar los objetos"
-                    )
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Error al cargar los objetos")
                 }
             )
         }

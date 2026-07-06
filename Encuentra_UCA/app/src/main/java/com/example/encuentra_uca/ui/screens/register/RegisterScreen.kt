@@ -1,5 +1,14 @@
 package com.example.encuentra_uca.ui.screens.register
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +50,8 @@ fun RegisterScreen(
             onRegisterSuccess()
         }
     }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -63,14 +74,14 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = uiState.name,
-            onValueChange = viewModel::onNameChange,
+            onValueChange = { if (it.length <= 50) viewModel.onNameChange(it) },
             label = { Text("Nombre completo") },
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
             value = uiState.email,
-            onValueChange = viewModel::onEmailChange,
+            onValueChange = { if (it.length <= 50) viewModel.onEmailChange(it) },
             label = { Text("Correo institucional") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
@@ -78,19 +89,41 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = uiState.password,
-            onValueChange = viewModel::onPasswordChange,
+            onValueChange = { if (it.length <= 30) viewModel.onPasswordChange(it) },
             label = { Text("Contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (passwordVisible) VisualTransformation.None
+            else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) Icons.Default.Visibility
+                        else Icons.Default.VisibilityOff,
+                        contentDescription = if (passwordVisible) "Ocultar contraseña"
+                        else "Mostrar contraseña"
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         )
 
         OutlinedTextField(
             value = uiState.confirmPassword,
-            onValueChange = viewModel::onConfirmPasswordChange,
+            onValueChange = { if (it.length <= 30) viewModel.onConfirmPasswordChange(it) },
             label = { Text("Confirmar contraseña") },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
+            else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            trailingIcon = {
+                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                    Icon(
+                        imageVector = if (confirmPasswordVisible) Icons.Default.Visibility
+                        else Icons.Default.VisibilityOff,
+                        contentDescription = if (confirmPasswordVisible) "Ocultar contraseña"
+                        else "Mostrar contraseña"
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         )
 

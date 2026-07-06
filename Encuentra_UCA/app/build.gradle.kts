@@ -84,4 +84,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
     implementation("com.google.firebase:firebase-messaging")
 
+    implementation("androidx.compose.material:material-icons-extended")
+
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+
 }
