@@ -1,11 +1,12 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const db = new Database(process.env.DB_PATH || path.join(__dirname, '..', '..', 'encuentra_uca.db'));
+const db = new Database(
+  process.env.DB_PATH || path.join(__dirname, '..', '..', 'encuentra_uca.db')
+);
 
 db.pragma('journal_mode = WAL');
 
-// Tabla de usuarios
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -16,7 +17,6 @@ db.exec(`
   )
 `);
 
-// Tabla de objetos perdidos/encontrados
 db.exec(`
   CREATE TABLE IF NOT EXISTS items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,6 +28,7 @@ db.exec(`
     foundById INTEGER NOT NULL,
     foundByEmail TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'available',
+    type TEXT NOT NULL DEFAULT 'found',
     timestamp INTEGER NOT NULL,
     FOREIGN KEY (foundById) REFERENCES users(id)
   )

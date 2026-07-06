@@ -48,16 +48,62 @@ async function sendNewItemNotification(item) {
 // GET /items
 router.get('/', (req, res) => {
   try {
-    const { category } = req.query;
-    let items;
+    const { category, type } = req.query;
+
+    let query = 'SELECT * FROM items WHERE 1=1';
+    const params = [];
+
     if (category) {
-      items = db.prepare('SELECT * FROM items WHERE category = ? ORDER BY timestamp DESC').all(category);
-    } else {
-      items = db.prepare('SELECT * FROM items ORDER BY timestamp DESC').all();
+      query += ' AND category = ?';
+      params.push(category);
     }
+
+    if (type) {
+      query += ' AND type = ?';
+      params.push(type);
+    }
+
+    query += ' ORDER BY timestamp DESC';
+
+    const items = db.prepare(query).all(...params);
     res.json(items);
   } catch (error) {
     console.error('Error en GET /items:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+// POST /items
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, category, imageUrl, location, type } = req.body;
+
+    if (!title || !description || !category || !location) {
+      return res.status(400).json({
+        error: 'Faltan campos requeridos: title, description, category, location'
+      });
+    }
+
+    const itemType = type === 'lost' ? 'lost' : 'found';
+    const timestamp = Date.now();
+
+    const result = db.prepare(
+      `INSERT INTO items (title, description, category, imageUrl, location, foundById, foundByEmail, status, type, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`
+    ).run(title, description, category, imageUrl || '', location, req.user.id, req.user.email, itemType, timestamp);
+
+    const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
+
+    res.status(201).json(newItem);
+
+    if (itemType === 'found') {
+      sendNewItemNotification(newItem).catch(err =>
+        console.error('Error FCM:', err.message)
+      );
+    }
+
+  } catch (error) {
+    console.error('Error en POST /items:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
@@ -79,7 +125,7 @@ router.get('/:id', (req, res) => {
 // POST /items
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { title, description, category, imageUrl, location } = req.body;
+    const { title, description, category, imageUrl, location, type } = req.body;
 
     if (!title || !description || !category || !location) {
       return res.status(400).json({
@@ -87,22 +133,23 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
 
+    const itemType = type === 'lost' ? 'lost' : 'found';
     const timestamp = Date.now();
 
     const result = db.prepare(
-      `INSERT INTO items (title, description, category, imageUrl, location, foundById, foundByEmail, status, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?)`
-    ).run(title, description, category, imageUrl || '', location, req.user.id, req.user.email, timestamp);
+      `INSERT INTO items (title, description, category, imageUrl, location, foundById, foundByEmail, status, type, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?, ?)`
+    ).run(title, description, category, imageUrl || '', location, req.user.id, req.user.email, itemType, timestamp);
 
     const newItem = db.prepare('SELECT * FROM items WHERE id = ?').get(result.lastInsertRowid);
 
-    // Responder primero, luego notificar
     res.status(201).json(newItem);
 
-    // Enviar notificación sin bloquear la respuesta
-    sendNewItemNotification(newItem).catch(err =>
-      console.error('Error FCM:', err.message)
-    );
+    if (itemType === 'found') {
+      sendNewItemNotification(newItem).catch(err =>
+        console.error('Error FCM:', err.message)
+      );
+    }
 
   } catch (error) {
     console.error('Error en POST /items:', error);
