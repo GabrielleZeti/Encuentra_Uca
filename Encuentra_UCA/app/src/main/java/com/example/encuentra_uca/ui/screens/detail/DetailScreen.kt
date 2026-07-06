@@ -1,5 +1,7 @@
 package com.example.encuentra_uca.ui.screens.detail
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.encuentra_uca.ui.AppViewModelFactory
@@ -46,6 +49,7 @@ fun DetailScreen(
     val viewModel: DetailViewModel = viewModel(factory = viewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
@@ -152,6 +156,20 @@ fun DetailScreen(
                         InfoRow(label = "Descripción", value = item.description)
                         InfoRow(label = "Ubicación", value = item.location)
                         InfoRow(label = "Reportado por", value = item.foundByEmail)
+
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = Uri.parse("mailto:${item.foundByEmail}")
+                                    putExtra(Intent.EXTRA_SUBJECT, "Objeto encontrado: ${item.title}")
+                                    putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que encontraste: ${item.title}. Me gustaría reclamarlo.")
+                                }
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("📧 Contactar al reportante")
+                        }
 
                         if (uiState.isOwner) {
                             Button(
