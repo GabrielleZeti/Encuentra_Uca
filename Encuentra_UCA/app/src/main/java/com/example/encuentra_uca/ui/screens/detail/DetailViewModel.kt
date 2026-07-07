@@ -37,9 +37,13 @@ class DetailViewModel(
 
             result.fold(
                 onSuccess = { item ->
+                    android.util.Log.d("DetailViewModel", "userEmail: '$currentUserEmail'")
+                    android.util.Log.d("DetailViewModel", "foundByEmail: '${item.foundByEmail}'")
+                    android.util.Log.d("DetailViewModel", "isOwner: ${item.foundByEmail == currentUserEmail}")
+
                     _uiState.value = DetailUiState(
                         item = item,
-                        isOwner = item.foundByEmail == currentUserEmail
+                        isOwner = item.foundByEmail.trim().lowercase() == currentUserEmail.trim().lowercase()
                     )
                 },
                 onFailure = {

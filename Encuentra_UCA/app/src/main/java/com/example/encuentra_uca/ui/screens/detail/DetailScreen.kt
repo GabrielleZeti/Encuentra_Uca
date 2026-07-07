@@ -157,27 +157,14 @@ fun DetailScreen(
                         InfoRow(label = "Ubicación", value = item.location)
                         InfoRow(label = "Reportado por", value = item.foundByEmail)
 
-                        Button(
-                            onClick = {
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = Uri.parse("mailto:${item.foundByEmail}")
-                                    putExtra(Intent.EXTRA_SUBJECT, "Objeto encontrado: ${item.title}")
-                                    putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que encontraste: ${item.title}. Me gustaría reclamarlo.")
-                                }
-                                context.startActivity(intent)
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("📧 Contactar al reportante")
-                        }
-
+                        // Botón contactar — solo si NO eres el dueño
                         if (!uiState.isOwner) {
                             Button(
                                 onClick = {
                                     val intent = Intent(Intent.ACTION_SENDTO).apply {
                                         data = Uri.parse("mailto:${item.foundByEmail}")
-                                        putExtra(Intent.EXTRA_SUBJECT, "Objeto encontrado: ${item.title}")
-                                        putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que encontraste: ${item.title}. Me gustaría reclamarlo.")
+                                        putExtra(Intent.EXTRA_SUBJECT, "Objeto: ${item.title}")
+                                        putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que reportaste: ${item.title}. Me gustaría comunicarme contigo.")
                                     }
                                     context.startActivity(intent)
                                 },
@@ -187,6 +174,7 @@ fun DetailScreen(
                             }
                         }
 
+                        // Botón eliminar — solo si eres el dueño
                         if (uiState.isOwner) {
                             Button(
                                 onClick = { showDeleteDialog = true },
