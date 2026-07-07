@@ -1,37 +1,41 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
 
-const db = new Database(
-  process.env.DB_PATH || path.join(__dirname, '..', '..', 'encuentra_uca.db')
-);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
-db.pragma('journal_mode = WAL');
+async function initializeDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      "createdAt" BIGINT NOT NULL
+    )
+  `);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    createdAt INTEGER NOT NULL
-  )
-`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS items (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT NOT NULL,
+      "imageUrl" TEXT,
+      location TEXT NOT NULL,
+      "foundById" INTEGER NOT NULL,
+      "foundByEmail" TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'available',
+      type TEXT NOT NULL DEFAULT 'found',
+      timestamp BIGINT NOT NULL,
+      FOREIGN KEY ("foundById") REFERENCES users(id)
+    )
+  `);
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT NOT NULL,
-    category TEXT NOT NULL,
-    imageUrl TEXT,
-    location TEXT NOT NULL,
-    foundById INTEGER NOT NULL,
-    foundByEmail TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'available',
-    type TEXT NOT NULL DEFAULT 'found',
-    timestamp INTEGER NOT NULL,
-    FOREIGN KEY (foundById) REFERENCES users(id)
-  )
-`);
+  console.log('Base de datos PostgreSQL inicializada');
+}
 
-module.exports = db;
+initializeDatabase().catch(console.error);
+
+module.exports = pool;

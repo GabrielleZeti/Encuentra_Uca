@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db/database');
+const pool = require('../db/database');
 const { JWT_SECRET } = require('../middleware/auth');
 
 const router = express.Router();
@@ -19,20 +19,20 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Debe usar un correo institucional (@uca.edu.sv)' });
     }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-    if (existing) {
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'El correo ya está registrado' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const createdAt = Date.now();
 
-    const result = db.prepare(
-      'INSERT INTO users (name, email, password, createdAt) VALUES (?, ?, ?, ?)'
-    ).run(name, email, hashedPassword, createdAt);
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password, "createdAt") VALUES ($1, $2, $3, $4) RETURNING id',
+      [name, email, hashedPassword, createdAt]
+    );
 
-    const userId = result.lastInsertRowid;
-
+    const userId = result.rows[0].id;
     const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '30d' });
 
     res.status(201).json({
@@ -54,7 +54,9 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos requeridos: email, password' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
