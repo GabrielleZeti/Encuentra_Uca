@@ -12,9 +12,9 @@ class ItemRepository(
     private val apiService: ItemsApiService,
     private val itemDao: ItemDao
 ) {
-    suspend fun getItems(category: String? = null): Result<List<ItemDto>> {
+    suspend fun getItems(category: String? = null, type: String = "found"): Result<List<ItemDto>> {
         return try {
-            val remoteItems = apiService.getItems(category)
+            val remoteItems = apiService.getItems(category, type)
             if (category == null) {
                 itemDao.deleteAll()
                 itemDao.insertAll(remoteItems.map { it.toEntity() })

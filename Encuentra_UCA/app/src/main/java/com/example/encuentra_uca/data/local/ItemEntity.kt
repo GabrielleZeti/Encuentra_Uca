@@ -15,5 +15,6 @@ data class ItemEntity(
     val foundById: Int,
     val foundByEmail: String,
     val status: String,
+    val type: String = "found",
     val timestamp: Long
 )

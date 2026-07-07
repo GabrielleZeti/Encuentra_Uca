@@ -13,7 +13,8 @@ data class HomeUiState(
     val items: List<ItemDto> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val selectedCategory: String? = null
+    val selectedCategory: String? = null,
+    val selectedType: String = "found"
 )
 
 val CATEGORIES = listOf("Todos", "💻 Electrónicos", "📄 Documentos", "🔑 Llaves", "🎒 Mochilas", "👕 Ropa", "📦 Otros")
@@ -29,10 +30,10 @@ class HomeViewModel(
         loadItems()
     }
 
-    fun loadItems(category: String? = null) {
+    fun loadItems(category: String? = null, type: String = "found") {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val result = itemRepository.getItems(category)
+            val result = itemRepository.getItems(category, type)
             result.fold(
                 onSuccess = { items ->
                     _uiState.value = _uiState.value.copy(items = items, isLoading = false)
@@ -47,6 +48,11 @@ class HomeViewModel(
     fun onCategorySelected(category: String) {
         val newCategory = if (category == "Todos") null else category
         _uiState.value = _uiState.value.copy(selectedCategory = if (category == "Todos") null else category)
-        loadItems(newCategory)
+        loadItems(newCategory, _uiState.value.selectedType)
+    }
+
+    fun onTypeSelected(type: String) {
+        _uiState.value = _uiState.value.copy(selectedType = type, selectedCategory = null)
+        loadItems(type = type)
     }
 }

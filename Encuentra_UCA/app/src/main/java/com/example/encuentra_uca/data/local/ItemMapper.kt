@@ -12,6 +12,7 @@ fun ItemDto.toEntity(): ItemEntity = ItemEntity(
     foundById = foundById,
     foundByEmail = foundByEmail,
     status = status,
+    type = type,
     timestamp = timestamp
 )
 
@@ -25,5 +26,6 @@ fun ItemEntity.toDto(): ItemDto = ItemDto(
     foundById = foundById,
     foundByEmail = foundByEmail,
     status = status,
+    type = type,
     timestamp = timestamp
 )

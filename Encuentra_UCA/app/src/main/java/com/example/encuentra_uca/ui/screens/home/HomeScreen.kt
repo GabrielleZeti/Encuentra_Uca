@@ -44,6 +44,9 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -58,7 +61,12 @@ fun HomeScreen(
 
     val pullRefreshState = rememberPullRefreshState(
         refreshing = uiState.isLoading,
-        onRefresh = { viewModel.loadItems(uiState.selectedCategory) }
+        onRefresh = {
+            viewModel.loadItems(
+                uiState.selectedCategory,
+                uiState.selectedType
+            )
+        }
     )
 
     Scaffold(
@@ -89,6 +97,24 @@ fun HomeScreen(
                 .pullRefresh(pullRefreshState)
         ) {
             Column {
+
+                // Pestañas Encontrados / Buscando
+                TabRow(
+                    selectedTabIndex = if (uiState.selectedType == "found") 0 else 1
+                ) {
+                    Tab(
+                        selected = uiState.selectedType == "found",
+                        onClick = { viewModel.onTypeSelected("found") },
+                        text = { Text("🔍 Encontrados") }
+                    )
+
+                    Tab(
+                        selected = uiState.selectedType == "lost",
+                        onClick = { viewModel.onTypeSelected("lost") },
+                        text = { Text("❓ Buscando") }
+                    )
+                }
+
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -100,6 +126,7 @@ fun HomeScreen(
                             category == uiState.selectedCategory -> true
                             else -> false
                         }
+
                         FilterChip(
                             selected = isSelected,
                             onClick = { viewModel.onCategorySelected(category) },
@@ -145,7 +172,10 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(uiState.items) { item ->
-                                ItemCard(item = item, onClick = { onItemClick(item.id) })
+                                ItemCard(
+                                    item = item,
+                                    onClick = { onItemClick(item.id) }
+                                )
                             }
                         }
                     }
@@ -204,11 +234,23 @@ fun ItemCard(item: ItemDto, onClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (item.type == "found") "Encontrado" else "Buscando",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (item.type == "found") MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.error
+                    )
+                }
                 Text(
                     text = item.category,
                     style = MaterialTheme.typography.labelMedium,

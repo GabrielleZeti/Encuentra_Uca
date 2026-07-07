@@ -16,9 +16,9 @@ class ItemsApiService {
     private val client = ApiClient.httpClient
     private val baseUrl = ApiClient.BASE_URL
 
-    suspend fun getItems(category: String? = null): List<ItemDto> {
-        val url = if (category != null) "$baseUrl/items?category=$category"
-        else "$baseUrl/items"
+    suspend fun getItems(category: String? = null, type: String = "found"): List<ItemDto> {
+        var url = "$baseUrl/items?type=$type"
+        if (category != null) url += "&category=$category"
         return client.get(url).body()
     }
 

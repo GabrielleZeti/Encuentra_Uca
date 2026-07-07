@@ -16,6 +16,7 @@ data class PublishUiState(
     val description: String = "",
     val category: String = "",
     val location: String = "",
+    val type: String = "found",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val isPublishSuccessful: Boolean = false
@@ -45,18 +46,28 @@ class PublishViewModel(
         _uiState.value = _uiState.value.copy(location = location, errorMessage = null)
     }
 
+    fun onTypeChange(type: String) {
+        _uiState.value = _uiState.value.copy(type = type)
+    }
+
     fun publish() {
         val state = _uiState.value
 
-        if (state.title.isBlank() || state.description.isBlank() ||
-            state.category.isBlank() || state.location.isBlank()
+        if (
+            state.title.isBlank() ||
+            state.description.isBlank() ||
+            state.category.isBlank() ||
+            state.location.isBlank()
         ) {
             _uiState.value = state.copy(errorMessage = "Completa todos los campos")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, errorMessage = null)
+            _uiState.value = state.copy(
+                isLoading = true,
+                errorMessage = null
+            )
 
             val token = tokenManager.tokenFlow.first()
 
@@ -74,7 +85,8 @@ class PublishViewModel(
                     title = state.title,
                     description = state.description,
                     category = state.category,
-                    location = state.location
+                    location = state.location,
+                    type = state.type
                 )
             )
 

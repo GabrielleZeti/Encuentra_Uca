@@ -13,6 +13,7 @@ data class ItemDto(
     val foundById: Int,
     val foundByEmail: String,
     val status: String,
+    val type: String = "found",
     val timestamp: Long
 )
 
@@ -22,5 +23,6 @@ data class CreateItemRequest(
     val description: String,
     val category: String,
     val location: String,
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    val type: String = "found"
 )

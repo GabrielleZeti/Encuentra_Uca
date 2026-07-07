@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.encuentra_uca.ui.AppViewModelFactory
 import com.example.encuentra_uca.ui.screens.home.CATEGORIES
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.FilterChip
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +61,7 @@ fun PublishScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Publicar objeto encontrado") },
+                title = { Text("Publicar objeto") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -79,16 +81,47 @@ fun PublishScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
             OutlinedTextField(
                 value = uiState.title,
-                onValueChange = { if (it.length <= 60) viewModel.onTitleChange(it) },
+                onValueChange = {
+                    if (it.length <= 60) viewModel.onTitleChange(it)
+                },
                 label = { Text("Nombre del objeto") },
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Selector de tipo
+            Text(
+                text = "Tipo de publicación",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = uiState.type == "found",
+                    onClick = { viewModel.onTypeChange("found") },
+                    label = { Text("🔍 Encontré algo") },
+                    modifier = Modifier.weight(1f)
+                )
+
+                FilterChip(
+                    selected = uiState.type == "lost",
+                    onClick = { viewModel.onTypeChange("lost") },
+                    label = { Text("❓ Perdí algo") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
             OutlinedTextField(
                 value = uiState.description,
-                onValueChange = { if (it.length <= 200) viewModel.onDescriptionChange(it) },
+                onValueChange = {
+                    if (it.length <= 200) viewModel.onDescriptionChange(it)
+                },
                 label = { Text("Descripción detallada") },
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth()
@@ -102,14 +135,17 @@ fun PublishScreen(
                     value = uiState.category,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Categoria") },
+                    label = { Text("Categoría") },
                     trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded)
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = dropdownExpanded
+                        )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                 )
+
                 ExposedDropdownMenu(
                     expanded = dropdownExpanded,
                     onDismissRequest = { dropdownExpanded = false }
@@ -125,10 +161,13 @@ fun PublishScreen(
                     }
                 }
             }
+
             OutlinedTextField(
                 value = uiState.location,
-                onValueChange = { if (it.length <= 80) viewModel.onLocationChange(it) },
-                label = { Text("Lugar donde fue encontrado") },
+                onValueChange = {
+                    if (it.length <= 80) viewModel.onLocationChange(it)
+                },
+                label = { Text("Lugar") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -145,7 +184,9 @@ fun PublishScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp)
+                    )
                 } else {
                     Text("Publicar")
                 }
