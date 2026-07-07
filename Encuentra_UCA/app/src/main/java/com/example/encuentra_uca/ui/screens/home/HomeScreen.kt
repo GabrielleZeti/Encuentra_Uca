@@ -27,28 +27,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.encuentra_uca.data.remote.dto.ItemDto
 import com.example.encuentra_uca.ui.AppViewModelFactory
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModelFactory: AppViewModelFactory,
@@ -59,15 +58,18 @@ fun HomeScreen(
     val viewModel: HomeViewModel = viewModel(factory = viewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
 
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = uiState.isLoading,
-        onRefresh = {
-            viewModel.loadItems(
-                uiState.selectedCategory,
-                uiState.selectedType
-            )
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
         }
-    )
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -90,103 +92,82 @@ fun HomeScreen(
         }
     ) { paddingValues ->
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .pullRefresh(pullRefreshState)
-        ) {
-            Column {
+        Column(modifier = Modifier.padding(paddingValues)) {
 
-                // Pestañas Encontrados / Buscando
-                TabRow(
-                    selectedTabIndex = if (uiState.selectedType == "found") 0 else 1
-                ) {
-                    Tab(
-                        selected = uiState.selectedType == "found",
-                        onClick = { viewModel.onTypeSelected("found") },
-                        text = { Text("🔍 Encontrados") }
-                    )
+            TabRow(selectedTabIndex = if (uiState.selectedType == "found") 0 else 1) {
+                Tab(
+                    selected = uiState.selectedType == "found",
+                    onClick = { viewModel.onTypeSelected("found") },
+                    text = { Text("🔍 Encontrados") }
+                )
+                Tab(
+                    selected = uiState.selectedType == "lost",
+                    onClick = { viewModel.onTypeSelected("lost") },
+                    text = { Text("❓ Buscando") }
+                )
+            }
 
-                    Tab(
-                        selected = uiState.selectedType == "lost",
-                        onClick = { viewModel.onTypeSelected("lost") },
-                        text = { Text("❓ Buscando") }
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                items(CATEGORIES) { category ->
+                    val isSelected = when {
+                        category == "Todos" && uiState.selectedCategory == null -> true
+                        category == uiState.selectedCategory -> true
+                        else -> false
+                    }
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { viewModel.onCategorySelected(category) },
+                        label = { Text(category) }
                     )
                 }
+            }
 
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    items(CATEGORIES) { category ->
-                        val isSelected = when {
-                            category == "Todos" && uiState.selectedCategory == null -> true
-                            category == uiState.selectedCategory -> true
-                            else -> false
-                        }
+            when {
+                uiState.isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
 
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.onCategorySelected(category) },
-                            label = { Text(category) }
+                uiState.errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = uiState.errorMessage ?: "",
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
-                when {
-                    uiState.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                uiState.items.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No hay objetos reportados aún")
                     }
+                }
 
-                    uiState.errorMessage != null -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = uiState.errorMessage ?: "",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
-                    uiState.items.isEmpty() -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("No hay objetos reportados aún")
-                        }
-                    }
-
-                    else -> {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(uiState.items) { item ->
-                                ItemCard(
-                                    item = item,
-                                    onClick = { onItemClick(item.id) }
-                                )
-                            }
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.items) { item ->
+                            ItemCard(item = item, onClick = { onItemClick(item.id) })
                         }
                     }
                 }
             }
-
-            PullRefreshIndicator(
-                refreshing = uiState.isLoading,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
     }
 }

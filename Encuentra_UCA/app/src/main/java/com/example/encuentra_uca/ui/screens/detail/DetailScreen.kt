@@ -171,6 +171,22 @@ fun DetailScreen(
                             Text("📧 Contactar al reportante")
                         }
 
+                        if (!uiState.isOwner) {
+                            Button(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                        data = Uri.parse("mailto:${item.foundByEmail}")
+                                        putExtra(Intent.EXTRA_SUBJECT, "Objeto encontrado: ${item.title}")
+                                        putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que encontraste: ${item.title}. Me gustaría reclamarlo.")
+                                    }
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("📧 Contactar al reportante")
+                            }
+                        }
+
                         if (uiState.isOwner) {
                             Button(
                                 onClick = { showDeleteDialog = true },

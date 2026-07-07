@@ -55,4 +55,8 @@ class HomeViewModel(
         _uiState.value = _uiState.value.copy(selectedType = type, selectedCategory = null)
         loadItems(type = type)
     }
+
+    fun refresh() {
+        loadItems(type = _uiState.value.selectedType)
+    }
 }

@@ -76,6 +76,7 @@ fun AppNavGraph(viewModelFactory: AppViewModelFactory) {
             )
         }
         composable(Screen.Home.route) {
+            val navBackStackEntry = it
             HomeScreen(
                 viewModelFactory = viewModelFactory,
                 onItemClick = { itemId ->
