@@ -44,6 +44,8 @@ import com.example.encuentra_uca.ui.FabricaViewModelApp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+
 
 @Composable
 fun PantallaInicioSesion(
@@ -73,7 +75,7 @@ fun PantallaInicioSesion(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "Logo Encuentra UCA",
             modifier = Modifier
-                .size(160.dp)
+                .size(200.dp)
                 .clip(RoundedCornerShape(24.dp))
         )
 
@@ -117,7 +119,9 @@ fun PantallaInicioSesion(
                     )
                 }
             },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
         )
 
         if (estadoUi.mensajeError != null) {
@@ -131,7 +135,9 @@ fun PantallaInicioSesion(
         Button(
             onClick = { viewModel.iniciarSesion() },
             enabled = !estadoUi.estaCargando,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
         ) {
             if (estadoUi.estaCargando) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp))
