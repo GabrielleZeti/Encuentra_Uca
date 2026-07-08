@@ -7,35 +7,35 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-val Context.dataStore by preferencesDataStore(name = "encuentra_uca_prefs")
+val Context.almacenDatos by preferencesDataStore(name = "encuentra_uca_prefs")
 
-class TokenManager(private val context: Context) {
-    private val TOKEN_KEY = stringPreferencesKey("auth_token")
-    private val USER_EMAIL_KEY = stringPreferencesKey("user_email")
-    private val USER_NAME_KEY = stringPreferencesKey("user_name")
+class GestorToken(private val contexto: Context) {
+    private val CLAVE_TOKEN = stringPreferencesKey("auth_token")
+    private val CLAVE_CORREO_USUARIO = stringPreferencesKey("user_email")
+    private val CLAVE_NOMBRE_USUARIO = stringPreferencesKey("user_name")
 
-    val tokenFlow: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[TOKEN_KEY]
+    val flujoToken: Flow<String?> = contexto.almacenDatos.data.map { prefs ->
+        prefs[CLAVE_TOKEN]
     }
 
-    val userEmailFlow: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[USER_EMAIL_KEY]
+    val flujoCorreoUsuario: Flow<String?> = contexto.almacenDatos.data.map { prefs ->
+        prefs[CLAVE_CORREO_USUARIO]
     }
 
-    val userNameFlow: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[USER_NAME_KEY]
+    val flujoNombreUsuario: Flow<String?> = contexto.almacenDatos.data.map { prefs ->
+        prefs[CLAVE_NOMBRE_USUARIO]
     }
 
-    suspend fun saveSession(token: String, email: String, name: String) {
-        context.dataStore.edit { prefs ->
-            prefs[TOKEN_KEY] = token
-            prefs[USER_EMAIL_KEY] = email
-            prefs[USER_NAME_KEY] = name
+    suspend fun guardarSesion(token: String, correo: String, nombre: String) {
+        contexto.almacenDatos.edit { prefs ->
+            prefs[CLAVE_TOKEN] = token
+            prefs[CLAVE_CORREO_USUARIO] = correo
+            prefs[CLAVE_NOMBRE_USUARIO] = nombre
         }
     }
 
-    suspend fun clearSession() {
-        context.dataStore.edit { prefs ->
+    suspend fun cerrarSesion() {
+        contexto.almacenDatos.edit { prefs ->
             prefs.clear()
         }
     }

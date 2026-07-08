@@ -1,34 +1,35 @@
 package com.example.encuentra_uca.data.remote.dto
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RegisterRequest(
-    val name: String,
-    val email: String,
-    val password: String
+data class SolicitudRegistro(
+    @SerialName("name") val nombre: String,
+    @SerialName("email") val correo: String,
+    @SerialName("password") val contrasena: String
 )
 
 @Serializable
-data class LoginRequest(
-    val email: String,
-    val password: String
+data class SolicitudInicioSesion(
+    @SerialName("email") val correo: String,
+    @SerialName("password") val contrasena: String
 )
 
 @Serializable
-data class AuthResponse(
-    val token: String,
-    val user: UserDto
+data class RespuestaAutenticacion(
+    @SerialName("token") val token: String,
+    @SerialName("user") val usuario: UsuarioDto
 )
 
 @Serializable
-data class UserDto(
-    val id: Int,
-    val name: String,
-    val email: String
+data class UsuarioDto(
+    @SerialName("id") val id: Int,
+    @SerialName("name") val nombre: String,
+    @SerialName("email") val correo: String
 )
 
 @Serializable
-data class ErrorResponse(
-    val error: String
+data class RespuestaError(
+    @SerialName("error") val error: String
 )

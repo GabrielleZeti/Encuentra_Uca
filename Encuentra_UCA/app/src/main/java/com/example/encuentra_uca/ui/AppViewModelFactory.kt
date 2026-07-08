@@ -4,45 +4,45 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.encuentra_uca.data.local.AppDatabase
-import com.example.encuentra_uca.data.local.TokenManager
-import com.example.encuentra_uca.data.remote.AuthApiService
-import com.example.encuentra_uca.data.remote.ItemsApiService
-import com.example.encuentra_uca.data.repository.AuthRepository
+import com.example.encuentra_uca.data.local.BaseDeDatosApp
+import com.example.encuentra_uca.data.local.GestorToken
+import com.example.encuentra_uca.data.remote.ServicioApiAutenticacion
+import com.example.encuentra_uca.data.remote.ServicioApiObjetos
+import com.example.encuentra_uca.data.repository.RepositorioAutenticacion
 import com.example.encuentra_uca.data.repository.ItemRepository
-import com.example.encuentra_uca.ui.screens.detail.DetailViewModel
-import com.example.encuentra_uca.ui.screens.home.HomeViewModel
-import com.example.encuentra_uca.ui.screens.login.LoginViewModel
-import com.example.encuentra_uca.ui.screens.profile.ProfileViewModel
-import com.example.encuentra_uca.ui.screens.publish.PublishViewModel
-import com.example.encuentra_uca.ui.screens.register.RegisterViewModel
+import com.example.encuentra_uca.ui.screens.detail.ViewModelDetalle
+import com.example.encuentra_uca.ui.screens.home.ViewModelInicio
+import com.example.encuentra_uca.ui.screens.login.ViewModelInicioSesion
+import com.example.encuentra_uca.ui.screens.profile.ViewModelPerfil
+import com.example.encuentra_uca.ui.screens.publish.ViewModelPublicar
+import com.example.encuentra_uca.ui.screens.register.ViewModelRegistro
 
-class AppViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+class FabricaViewModelApp(private val contexto: Context) : ViewModelProvider.Factory {
 
-    private val authApiService = AuthApiService()
-    private val itemsApiService = ItemsApiService()
-    private val tokenManager = TokenManager(context)
-    private val database = AppDatabase.getInstance(context)
-    private val itemDao = database.itemDao()
-    private val authRepository = AuthRepository(authApiService, tokenManager)
-    private val itemRepository = ItemRepository(itemsApiService, itemDao)
+    private val servicioApiAutenticacion = ServicioApiAutenticacion()
+    private val servicioApiObjetos = ServicioApiObjetos()
+    private val gestorToken = GestorToken(contexto)
+    private val baseDeDatos = BaseDeDatosApp.obtenerInstancia(contexto)
+    private val daoObjeto = baseDeDatos.daoObjeto()
+    private val repositorioAutenticacion = RepositorioAutenticacion(servicioApiAutenticacion, gestorToken)
+    private val itemRepository = ItemRepository(servicioApiObjetos, daoObjeto)
 
-    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+    override fun <T : ViewModel> create(claseModelo: Class<T>, extras: CreationExtras): T {
         return when {
-            modelClass.isAssignableFrom(LoginViewModel::class.java) ->
-                LoginViewModel(authRepository) as T
-            modelClass.isAssignableFrom(RegisterViewModel::class.java) ->
-                RegisterViewModel(authRepository) as T
-            modelClass.isAssignableFrom(HomeViewModel::class.java) ->
-                HomeViewModel(itemRepository) as T
-            modelClass.isAssignableFrom(DetailViewModel::class.java) ->
-                DetailViewModel(itemRepository, tokenManager) as T
-            modelClass.isAssignableFrom(PublishViewModel::class.java) ->
-                PublishViewModel(itemRepository, tokenManager) as T
-            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
-                ProfileViewModel(authRepository) as T
+            claseModelo.isAssignableFrom(ViewModelInicioSesion::class.java) ->
+                ViewModelInicioSesion(repositorioAutenticacion) as T
+            claseModelo.isAssignableFrom(ViewModelRegistro::class.java) ->
+                ViewModelRegistro(repositorioAutenticacion) as T
+            claseModelo.isAssignableFrom(ViewModelInicio::class.java) ->
+                ViewModelInicio(itemRepository) as T
+            claseModelo.isAssignableFrom(ViewModelDetalle::class.java) ->
+                ViewModelDetalle(itemRepository, gestorToken) as T
+            claseModelo.isAssignableFrom(ViewModelPublicar::class.java) ->
+                ViewModelPublicar(itemRepository, gestorToken) as T
+            claseModelo.isAssignableFrom(ViewModelPerfil::class.java) ->
+                ViewModelPerfil(repositorioAutenticacion) as T
             else ->
-                throw IllegalArgumentException("ViewModel desconocido: ${modelClass.name}")
+                throw IllegalArgumentException("ViewModel desconocido: ${claseModelo.name}")
         }
     }
 }

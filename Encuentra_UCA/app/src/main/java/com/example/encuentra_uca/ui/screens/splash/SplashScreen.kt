@@ -7,21 +7,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.encuentra_uca.data.local.TokenManager
+import com.example.encuentra_uca.data.local.GestorToken
 import kotlinx.coroutines.flow.first
 
 @Composable
-fun SplashScreen(
-    tokenManager: TokenManager,
-    onHasSession: () -> Unit,
-    onNoSession: () -> Unit
+fun PantallaCarga(
+    gestorToken: GestorToken,
+    alTenerSesion: () -> Unit,
+    alNoTenerSesion: () -> Unit
 ) {
     LaunchedEffect(Unit) {
-        val token = tokenManager.tokenFlow.first()
+        val token = gestorToken.flujoToken.first()
         if (!token.isNullOrBlank()) {
-            onHasSession()
+            alTenerSesion()
         } else {
-            onNoSession()
+            alNoTenerSesion()
         }
     }
 

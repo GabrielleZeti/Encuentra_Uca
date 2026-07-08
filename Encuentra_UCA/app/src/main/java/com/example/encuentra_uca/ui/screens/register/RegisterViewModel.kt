@@ -2,84 +2,84 @@ package com.example.encuentra_uca.ui.screens.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.encuentra_uca.data.repository.AuthRepository
+import com.example.encuentra_uca.data.repository.RepositorioAutenticacion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class RegisterUiState(
-    val name: String = "",
-    val email: String = "",
-    val password: String = "",
-    val confirmPassword: String = "",
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isRegisterSuccessful: Boolean = false
+data class EstadoUiRegistro(
+    val nombre: String = "",
+    val correo: String = "",
+    val contrasena: String = "",
+    val confirmarContrasena: String = "",
+    val estaCargando: Boolean = false,
+    val mensajeError: String? = null,
+    val registroExitoso: Boolean = false
 )
 
-class RegisterViewModel(
-    private val authRepository: AuthRepository
+class ViewModelRegistro(
+    private val repositorioAutenticacion: RepositorioAutenticacion
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(RegisterUiState())
-    val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
+    private val _estadoUi = MutableStateFlow(EstadoUiRegistro())
+    val estadoUi: StateFlow<EstadoUiRegistro> = _estadoUi.asStateFlow()
 
-    fun onNameChange(name: String) {
-        _uiState.value = _uiState.value.copy(name = name, errorMessage = null)
+    fun alCambiarNombre(nombre: String) {
+        _estadoUi.value = _estadoUi.value.copy(nombre = nombre, mensajeError = null)
     }
 
-    fun onEmailChange(email: String) {
-        _uiState.value = _uiState.value.copy(email = email, errorMessage = null)
+    fun alCambiarCorreo(correo: String) {
+        _estadoUi.value = _estadoUi.value.copy(correo = correo, mensajeError = null)
     }
 
-    fun onPasswordChange(password: String) {
-        _uiState.value = _uiState.value.copy(password = password, errorMessage = null)
+    fun alCambiarContrasena(contrasena: String) {
+        _estadoUi.value = _estadoUi.value.copy(contrasena = contrasena, mensajeError = null)
     }
 
-    fun onConfirmPasswordChange(confirmPassword: String) {
-        _uiState.value = _uiState.value.copy(confirmPassword = confirmPassword, errorMessage = null)
+    fun alCambiarConfirmarContrasena(confirmarContrasena: String) {
+        _estadoUi.value = _estadoUi.value.copy(confirmarContrasena = confirmarContrasena, mensajeError = null)
     }
 
-    fun register() {
-        val state = _uiState.value
+    fun registrar() {
+        val estado = _estadoUi.value
 
-        if (state.name.isBlank() || state.email.isBlank() || state.password.isBlank()) {
-            _uiState.value = state.copy(errorMessage = "Completa todos los campos")
+        if (estado.nombre.isBlank() || estado.correo.isBlank() || estado.contrasena.isBlank()) {
+            _estadoUi.value = estado.copy(mensajeError = "Completa todos los campos")
             return
         }
 
-        if (!state.email.endsWith("@uca.edu.sv")) {
-            _uiState.value = state.copy(errorMessage = "Usa tu correo institucional (@uca.edu.sv)")
+        if (!estado.correo.endsWith("@uca.edu.sv")) {
+            _estadoUi.value = estado.copy(mensajeError = "Usa tu correo institucional (@uca.edu.sv)")
             return
         }
 
-        if (state.password != state.confirmPassword) {
-            _uiState.value = state.copy(errorMessage = "Las contraseñas no coinciden")
+        if (estado.contrasena != estado.confirmarContrasena) {
+            _estadoUi.value = estado.copy(mensajeError = "Las contraseñas no coinciden")
             return
         }
 
-        if (state.password.length < 6) {
-            _uiState.value = state.copy(errorMessage = "La contraseña debe tener al menos 6 caracteres")
+        if (estado.contrasena.length < 6) {
+            _estadoUi.value = estado.copy(mensajeError = "La contraseña debe tener al menos 6 caracteres")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, errorMessage = null)
+            _estadoUi.value = estado.copy(estaCargando = true, mensajeError = null)
 
-            val result = authRepository.register(state.name, state.email, state.password)
+            val resultado = repositorioAutenticacion.registrar(estado.nombre, estado.correo, estado.contrasena)
 
-            result.fold(
+            resultado.fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isRegisterSuccessful = true
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        registroExitoso = true
                     )
                 },
                 onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Error al registrarse. El correo ya puede estar en uso."
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        mensajeError = "Error al registrarse. El correo ya puede estar en uso."
                     )
                 }
             )

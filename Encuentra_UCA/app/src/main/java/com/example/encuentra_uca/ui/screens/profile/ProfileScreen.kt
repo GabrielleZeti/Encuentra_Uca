@@ -32,43 +32,45 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.encuentra_uca.ui.AppViewModelFactory
+import com.example.encuentra_uca.R
+import com.example.encuentra_uca.ui.FabricaViewModelApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    viewModelFactory: AppViewModelFactory,
-    onLogout: () -> Unit,
-    onBack: () -> Unit
+fun PantallaPerfil(
+    fabricaViewModel: FabricaViewModelApp,
+    alCerrarSesion: () -> Unit,
+    alRegresar: () -> Unit
 ) {
-    val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
-    val uiState by viewModel.uiState.collectAsState()
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    val viewModel: ViewModelPerfil = viewModel(factory = fabricaViewModel)
+    val estadoUi by viewModel.estadoUi.collectAsState()
+    var mostrarDialogoCierreSesion by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.isLogoutSuccessful) {
-        if (uiState.isLogoutSuccessful) {
-            onLogout()
+    LaunchedEffect(estadoUi.cierreSesionExitoso) {
+        if (estadoUi.cierreSesionExitoso) {
+            alCerrarSesion()
         }
     }
 
-    if (showLogoutDialog) {
+    if (mostrarDialogoCierreSesion) {
         AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Cerrar sesion") },
-            text = { Text("¿Estas seguro que deseas cerrar sesion?") },
+            onDismissRequest = { mostrarDialogoCierreSesion = false },
+            title = { Text(stringResource(R.string.logout_title)) },
+            text = { Text(stringResource(R.string.logout_text)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showLogoutDialog = false
-                    viewModel.logout()
+                    mostrarDialogoCierreSesion = false
+                    viewModel.cerrarSesion()
                 }) {
-                    Text("Cerrar sesion", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.btn_logout), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancelar")
+                TextButton(onClick = { mostrarDialogoCierreSesion = false }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -77,22 +79,22 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mi perfil") },
+                title = { Text(stringResource(R.string.profile_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = alRegresar) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 }
             )
         }
-    ) { paddingValues ->
+    ) { valoresRelleno ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(valoresRelleno)
                 .padding(24.dp)
         ) {
             Column(
@@ -110,12 +112,12 @@ fun ProfileScreen(
                 )
 
                 Text(
-                    text = uiState.userName,
+                    text = estadoUi.nombreUsuario,
                     style = MaterialTheme.typography.headlineSmall
                 )
 
                 Text(
-                    text = uiState.userEmail,
+                    text = estadoUi.correoUsuario,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -123,13 +125,13 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { showLogoutDialog = true },
+                    onClick = { mostrarDialogoCierreSesion = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Cerrar sesion")
+                    Text(stringResource(R.string.btn_logout))
                 }
             }
         }

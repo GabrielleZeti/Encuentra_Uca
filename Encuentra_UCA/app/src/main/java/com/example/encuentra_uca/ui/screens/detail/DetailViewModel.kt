@@ -2,8 +2,8 @@ package com.example.encuentra_uca.ui.screens.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.encuentra_uca.data.local.TokenManager
-import com.example.encuentra_uca.data.remote.dto.ItemDto
+import com.example.encuentra_uca.data.local.GestorToken
+import com.example.encuentra_uca.data.remote.dto.ObjetoDto
 import com.example.encuentra_uca.data.repository.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,62 +11,58 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class DetailUiState(
-    val item: ItemDto? = null,
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isOwner: Boolean = false,
-    val isDeleted: Boolean = false,
-    val isDeleting: Boolean = false
+data class EstadoUiDetalle(
+    val objeto: ObjetoDto? = null,
+    val estaCargando: Boolean = false,
+    val mensajeError: String? = null,
+    val esPropietario: Boolean = false,
+    val estaEliminado: Boolean = false,
+    val estaEliminando: Boolean = false
 )
 
-class DetailViewModel(
+class ViewModelDetalle(
     private val itemRepository: ItemRepository,
-    private val tokenManager: TokenManager
+    private val gestorToken: GestorToken
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(DetailUiState())
-    val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
+    private val _estadoUi = MutableStateFlow(EstadoUiDetalle())
+    val estadoUi: StateFlow<EstadoUiDetalle> = _estadoUi.asStateFlow()
 
-    fun loadItem(id: Int) {
+    fun cargarObjeto(id: Int) {
         viewModelScope.launch {
-            _uiState.value = DetailUiState(isLoading = true)
+            _estadoUi.value = EstadoUiDetalle(estaCargando = true)
 
-            val currentUserEmail = tokenManager.userEmailFlow.first() ?: ""
-            val result = itemRepository.getItemById(id)
+            val correoUsuarioActual = gestorToken.flujoCorreoUsuario.first() ?: ""
+            val resultado = itemRepository.obtenerObjetoPorId(id)
 
-            result.fold(
-                onSuccess = { item ->
-                    android.util.Log.d("DetailViewModel", "userEmail: '$currentUserEmail'")
-                    android.util.Log.d("DetailViewModel", "foundByEmail: '${item.foundByEmail}'")
-                    android.util.Log.d("DetailViewModel", "isOwner: ${item.foundByEmail == currentUserEmail}")
-
-                    _uiState.value = DetailUiState(
-                        item = item,
-                        isOwner = item.foundByEmail.trim().lowercase() == currentUserEmail.trim().lowercase()
+            resultado.fold(
+                onSuccess = { objeto ->
+                    _estadoUi.value = EstadoUiDetalle(
+                        objeto = objeto,
+                        esPropietario = objeto.encontradoPorEmail.trim().lowercase() == correoUsuarioActual.trim().lowercase()
                     )
                 },
                 onFailure = {
-                    _uiState.value = DetailUiState(errorMessage = "No se pudo cargar el objeto")
+                    _estadoUi.value = EstadoUiDetalle(mensajeError = "No se pudo cargar el objeto")
                 }
             )
         }
     }
 
-    fun deleteItem() {
-        val item = _uiState.value.item ?: return
+    fun eliminarObjeto() {
+        val objeto = _estadoUi.value.objeto ?: return
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isDeleting = true)
-            val token = tokenManager.tokenFlow.first() ?: return@launch
-            val result = itemRepository.deleteItem(token, item.id)
-            result.fold(
+            _estadoUi.value = _estadoUi.value.copy(estaEliminando = true)
+            val token = gestorToken.flujoToken.first() ?: return@launch
+            val resultado = itemRepository.eliminarObjeto(token, objeto.id)
+            resultado.fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(isDeleted = true, isDeleting = false)
+                    _estadoUi.value = _estadoUi.value.copy(estaEliminado = true, estaEliminando = false)
                 },
                 onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isDeleting = false,
-                        errorMessage = "Error al eliminar el objeto"
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaEliminando = false,
+                        mensajeError = "Error al eliminar el objeto"
                     )
                 }
             )

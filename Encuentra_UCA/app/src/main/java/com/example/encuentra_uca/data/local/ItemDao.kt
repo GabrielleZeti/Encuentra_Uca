@@ -7,17 +7,17 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ItemDao {
+interface DaoObjeto {
 
-    @Query("SELECT * FROM items ORDER BY timestamp DESC")
-    fun getAllItems(): Flow<List<ItemEntity>>
+    @Query("SELECT * FROM objetos ORDER BY timestamp DESC")
+    fun obtenerTodosLosObjetos(): Flow<List<EntidadObjeto>>
 
-    @Query("SELECT * FROM items WHERE category = :category ORDER BY timestamp DESC")
-    fun getItemsByCategory(category: String): Flow<List<ItemEntity>>
+    @Query("SELECT * FROM objetos WHERE category = :categoria ORDER BY timestamp DESC")
+    fun obtenerObjetosPorCategoria(categoria: String): Flow<List<EntidadObjeto>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(items: List<ItemEntity>)
+    suspend fun insertarTodos(objetos: List<EntidadObjeto>)
 
-    @Query("DELETE FROM items")
-    suspend fun deleteAll()
+    @Query("DELETE FROM objetos")
+    suspend fun eliminarTodo()
 }

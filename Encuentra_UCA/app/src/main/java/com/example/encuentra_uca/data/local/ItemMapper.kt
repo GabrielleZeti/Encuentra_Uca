@@ -1,31 +1,31 @@
 package com.example.encuentra_uca.data.local
 
-import com.example.encuentra_uca.data.remote.dto.ItemDto
+import com.example.encuentra_uca.data.remote.dto.ObjetoDto
 
-fun ItemDto.toEntity(): ItemEntity = ItemEntity(
+fun ObjetoDto.aEntidad(): EntidadObjeto = EntidadObjeto(
     id = id,
-    title = title,
-    description = description,
-    category = category,
-    imageUrl = imageUrl,
-    location = location,
-    foundById = foundById,
-    foundByEmail = foundByEmail,
-    status = status,
-    type = type,
-    timestamp = timestamp
+    titulo = titulo,
+    descripcion = descripcion,
+    categoria = categoria,
+    urlImagen = urlImagen,
+    ubicacion = ubicacion,
+    encontradoPorId = encontradoPorId,
+    encontradoPorEmail = encontradoPorEmail,
+    estado = estado,
+    tipo = tipo,
+    marcaTiempo = marcaTiempo
 )
 
-fun ItemEntity.toDto(): ItemDto = ItemDto(
+fun EntidadObjeto.aDto(): ObjetoDto = ObjetoDto(
     id = id,
-    title = title,
-    description = description,
-    category = category,
-    imageUrl = imageUrl,
-    location = location,
-    foundById = foundById,
-    foundByEmail = foundByEmail,
-    status = status,
-    type = type,
-    timestamp = timestamp
+    titulo = titulo,
+    descripcion = descripcion,
+    categoria = categoria,
+    urlImagen = urlImagen,
+    ubicacion = ubicacion,
+    encontradoPorId = encontradoPorId,
+    encontradoPorEmail = encontradoPorEmail,
+    estado = estado,
+    tipo = tipo,
+    marcaTiempo = marcaTiempo
 )

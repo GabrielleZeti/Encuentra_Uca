@@ -4,120 +4,119 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.encuentra_uca.ui.AppViewModelFactory
-import com.example.encuentra_uca.ui.screens.detail.DetailScreen
-import com.example.encuentra_uca.ui.screens.home.HomeScreen
-import com.example.encuentra_uca.ui.screens.login.LoginScreen
-import com.example.encuentra_uca.ui.screens.profile.ProfileScreen
-import com.example.encuentra_uca.ui.screens.publish.PublishScreen
-import com.example.encuentra_uca.ui.screens.register.RegisterScreen
-import com.example.encuentra_uca.ui.screens.splash.SplashScreen
-import com.example.encuentra_uca.data.local.TokenManager
+import com.example.encuentra_uca.ui.FabricaViewModelApp
+import com.example.encuentra_uca.ui.screens.detail.PantallaDetalle
+import com.example.encuentra_uca.ui.screens.home.PantallaInicio
+import com.example.encuentra_uca.ui.screens.login.PantallaInicioSesion
+import com.example.encuentra_uca.ui.screens.profile.PantallaPerfil
+import com.example.encuentra_uca.ui.screens.publish.PantallaPublicar
+import com.example.encuentra_uca.ui.screens.register.PantallaRegistro
+import com.example.encuentra_uca.ui.screens.splash.PantallaCarga
+import com.example.encuentra_uca.data.local.GestorToken
 
-sealed class Screen(val route: String) {
-    object Splash : Screen("splash")
-    object Login : Screen("login")
-    object Register : Screen("register")
-    object Home : Screen("home")
-    object Detail : Screen("detail/{itemId}") {
-        fun createRoute(itemId: Int) = "detail/$itemId"
+sealed class Pantalla(val ruta: String) {
+    object Carga : Pantalla("carga")
+    object InicioSesion : Pantalla("inicio_sesion")
+    object Registro : Pantalla("registro")
+    object Inicio : Pantalla("inicio")
+    object Detalle : Pantalla("detalle/{idObjeto}") {
+        fun crearRuta(idObjeto: Int) = "detalle/$idObjeto"
     }
-    object Publish : Screen("publish")
-    object Profile : Screen("profile")
+    object Publicar : Pantalla("publicar")
+    object Perfil : Pantalla("perfil")
 }
 
 @Composable
-fun AppNavGraph(viewModelFactory: AppViewModelFactory) {
-    val navController = rememberNavController()
+fun GrafoNavegacionApp(fabricaViewModel: FabricaViewModelApp) {
+    val controladorNavegacion = rememberNavController()
 
     NavHost(
-        navController = navController,
-        startDestination = Screen.Splash.route
+        navController = controladorNavegacion,
+        startDestination = Pantalla.Carga.ruta
     ) {
-        composable(Screen.Splash.route) {
-            SplashScreen(
-                tokenManager = TokenManager(androidx.compose.ui.platform.LocalContext.current),
-                onHasSession = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+        composable(Pantalla.Carga.ruta) {
+            PantallaCarga(
+                gestorToken = GestorToken(androidx.compose.ui.platform.LocalContext.current),
+                alTenerSesion = {
+                    controladorNavegacion.navigate(Pantalla.Inicio.ruta) {
+                        popUpTo(Pantalla.Carga.ruta) { inclusive = true }
                     }
                 },
-                onNoSession = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Splash.route) { inclusive = true }
+                alNoTenerSesion = {
+                    controladorNavegacion.navigate(Pantalla.InicioSesion.ruta) {
+                        popUpTo(Pantalla.Carga.ruta) { inclusive = true }
                     }
                 }
             )
         }
-        composable(Screen.Login.route) {
-            LoginScreen(
-                viewModelFactory = viewModelFactory,
-                onLoginSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+        composable(Pantalla.InicioSesion.ruta) {
+            PantallaInicioSesion(
+                fabricaViewModel = fabricaViewModel,
+                alIniciarSesionConExito = {
+                    controladorNavegacion.navigate(Pantalla.Inicio.ruta) {
+                        popUpTo(Pantalla.InicioSesion.ruta) { inclusive = true }
                     }
                 },
-                onNavigateToRegister = {
-                    navController.navigate(Screen.Register.route)
+                alNavegarARegistro = {
+                    controladorNavegacion.navigate(Pantalla.Registro.ruta)
                 }
             )
         }
-        composable(Screen.Register.route) {
-            RegisterScreen(
-                viewModelFactory = viewModelFactory,
-                onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+        composable(Pantalla.Registro.ruta) {
+            PantallaRegistro(
+                fabricaViewModel = fabricaViewModel,
+                alRegistrarseConExito = {
+                    controladorNavegacion.navigate(Pantalla.Inicio.ruta) {
+                        popUpTo(Pantalla.Registro.ruta) { inclusive = true }
                     }
                 },
-                onNavigateToLogin = {
-                    navController.popBackStack()
+                alNavegarAInicioSesion = {
+                    controladorNavegacion.popBackStack()
                 }
             )
         }
-        composable(Screen.Home.route) {
-            val navBackStackEntry = it
-            HomeScreen(
-                viewModelFactory = viewModelFactory,
-                onItemClick = { itemId ->
-                    navController.navigate(Screen.Detail.createRoute(itemId))
+        composable(Pantalla.Inicio.ruta) {
+            PantallaInicio(
+                fabricaViewModel = fabricaViewModel,
+                alHacerClicEnObjeto = { idObjeto ->
+                    controladorNavegacion.navigate(Pantalla.Detalle.crearRuta(idObjeto))
                 },
-                onPublishClick = {
-                    navController.navigate(Screen.Publish.route)
+                alHacerClicEnPublicar = {
+                    controladorNavegacion.navigate(Pantalla.Publicar.ruta)
                 },
-                onProfileClick = {
-                    navController.navigate(Screen.Profile.route)
+                alHacerClicEnPerfil = {
+                    controladorNavegacion.navigate(Pantalla.Perfil.ruta)
                 }
             )
         }
-        composable(Screen.Detail.route) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getString("itemId")?.toIntOrNull() ?: return@composable
-            DetailScreen(
-                itemId = itemId,
-                viewModelFactory = viewModelFactory,
-                onBack = { navController.popBackStack() }
+        composable(Pantalla.Detalle.ruta) { entradaPilaBack ->
+            val idObjeto = entradaPilaBack.arguments?.getString("idObjeto")?.toIntOrNull() ?: return@composable
+            PantallaDetalle(
+                idObjeto = idObjeto,
+                fabricaViewModel = fabricaViewModel,
+                alRegresar = { controladorNavegacion.popBackStack() }
             )
         }
-        composable(Screen.Publish.route) {
-            PublishScreen(
-                viewModelFactory = viewModelFactory,
-                onPublishSuccess = {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(Screen.Home.route) { inclusive = true }
+        composable(Pantalla.Publicar.ruta) {
+            PantallaPublicar(
+                fabricaViewModel = fabricaViewModel,
+                alPublicarConExito = {
+                    controladorNavegacion.navigate(Pantalla.Inicio.ruta) {
+                        popUpTo(Pantalla.Inicio.ruta) { inclusive = true }
                     }
                 },
-                onBack = { navController.popBackStack() }
+                alRegresar = { controladorNavegacion.popBackStack() }
             )
         }
-        composable(Screen.Profile.route) {
-            ProfileScreen(
-                viewModelFactory = viewModelFactory,
-                onLogout = {
-                    navController.navigate(Screen.Login.route) {
+        composable(Pantalla.Perfil.ruta) {
+            PantallaPerfil(
+                fabricaViewModel = fabricaViewModel,
+                alCerrarSesion = {
+                    controladorNavegacion.navigate(Pantalla.InicioSesion.ruta) {
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onBack = { navController.popBackStack() }
+                alRegresar = { controladorNavegacion.popBackStack() }
             )
         }
     }

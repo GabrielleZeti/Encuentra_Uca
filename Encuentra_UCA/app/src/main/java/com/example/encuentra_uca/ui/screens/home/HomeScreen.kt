@@ -38,72 +38,74 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.encuentra_uca.data.remote.dto.ItemDto
-import com.example.encuentra_uca.ui.AppViewModelFactory
+import com.example.encuentra_uca.R
+import com.example.encuentra_uca.data.remote.dto.ObjetoDto
+import com.example.encuentra_uca.ui.FabricaViewModelApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    viewModelFactory: AppViewModelFactory,
-    onItemClick: (Int) -> Unit,
-    onPublishClick: () -> Unit,
-    onProfileClick: () -> Unit
+fun PantallaInicio(
+    fabricaViewModel: FabricaViewModelApp,
+    alHacerClicEnObjeto: (Int) -> Unit,
+    alHacerClicEnPublicar: () -> Unit,
+    alHacerClicEnPerfil: () -> Unit
 ) {
-    val viewModel: HomeViewModel = viewModel(factory = viewModelFactory)
-    val uiState by viewModel.uiState.collectAsState()
+    val viewModel: ViewModelInicio = viewModel(factory = fabricaViewModel)
+    val estadoUi by viewModel.estadoUi.collectAsState()
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refresh()
+    val duenoCicloVida = LocalLifecycleOwner.current
+    DisposableEffect(duenoCicloVida) {
+        val observador = LifecycleEventObserver { _, evento ->
+            if (evento == Lifecycle.Event.ON_RESUME) {
+                viewModel.actualizar()
             }
         }
-        lifecycleOwner.lifecycle.addObserver(observer)
+        duenoCicloVida.lifecycle.addObserver(observador)
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
+            duenoCicloVida.lifecycle.removeObserver(observador)
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Encuentra UCA") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = onProfileClick) {
+                    IconButton(onClick = alHacerClicEnPerfil) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Mi perfil"
+                            contentDescription = stringResource(R.string.menu_profile)
                         )
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onPublishClick) {
-                Icon(Icons.Default.Add, contentDescription = "Publicar objeto")
+            FloatingActionButton(onClick = alHacerClicEnPublicar) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.btn_publish))
             }
         }
-    ) { paddingValues ->
+    ) { valoresRelleno ->
 
-        Column(modifier = Modifier.padding(paddingValues)) {
+        Column(modifier = Modifier.padding(valoresRelleno)) {
 
-            TabRow(selectedTabIndex = if (uiState.selectedType == "found") 0 else 1) {
+            TabRow(selectedTabIndex = if (estadoUi.tipoSeleccionado == "found") 0 else 1) {
                 Tab(
-                    selected = uiState.selectedType == "found",
-                    onClick = { viewModel.onTypeSelected("found") },
-                    text = { Text("🔍 Encontrados") }
+                    selected = estadoUi.tipoSeleccionado == "found",
+                    onClick = { viewModel.alSeleccionarTipo("found") },
+                    text = { Text(stringResource(R.string.tab_found)) }
                 )
                 Tab(
-                    selected = uiState.selectedType == "lost",
-                    onClick = { viewModel.onTypeSelected("lost") },
-                    text = { Text("❓ Buscando") }
+                    selected = estadoUi.tipoSeleccionado == "lost",
+                    onClick = { viewModel.alSeleccionarTipo("lost") },
+                    text = { Text(stringResource(R.string.tab_lost)) }
                 )
             }
 
@@ -112,22 +114,22 @@ fun HomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
-                items(CATEGORIES) { category ->
-                    val isSelected = when {
-                        category == "Todos" && uiState.selectedCategory == null -> true
-                        category == uiState.selectedCategory -> true
+                items(CATEGORIAS) { categoria ->
+                    val estaSeleccionada = when {
+                        categoria == "Todos" && estadoUi.categoriaSeleccionada == null -> true
+                        categoria == estadoUi.categoriaSeleccionada -> true
                         else -> false
                     }
                     FilterChip(
-                        selected = isSelected,
-                        onClick = { viewModel.onCategorySelected(category) },
-                        label = { Text(category) }
+                        selected = estaSeleccionada,
+                        onClick = { viewModel.alSeleccionarCategoria(categoria) },
+                        label = { Text(categoria) }
                     )
                 }
             }
 
             when {
-                uiState.isLoading -> {
+                estadoUi.estaCargando -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
@@ -136,24 +138,24 @@ fun HomeScreen(
                     }
                 }
 
-                uiState.errorMessage != null -> {
+                estadoUi.mensajeError != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = uiState.errorMessage ?: "",
+                            text = estadoUi.mensajeError ?: "",
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
-                uiState.items.isEmpty() -> {
+                estadoUi.objetos.isEmpty() -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No hay objetos reportados aún")
+                        Text(stringResource(R.string.empty_items))
                     }
                 }
 
@@ -162,8 +164,8 @@ fun HomeScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(uiState.items) { item ->
-                            ItemCard(item = item, onClick = { onItemClick(item.id) })
+                        items(estadoUi.objetos) { objeto ->
+                            TarjetaObjeto(objeto = objeto, alHacerClic = { alHacerClicEnObjeto(objeto.id) })
                         }
                     }
                 }
@@ -173,18 +175,21 @@ fun HomeScreen(
 }
 
 @Composable
-fun ItemCard(item: ItemDto, onClick: () -> Unit) {
-    val categoryEmoji = when {
-        item.category.contains("Electrónico") -> "💻"
-        item.category.contains("Documento") -> "📄"
-        item.category.contains("Llave") -> "🔑"
-        item.category.contains("Mochila") -> "🎒"
-        item.category.contains("Ropa") -> "👕"
-        else -> "📦"
+fun TarjetaObjeto(objeto: ObjetoDto, alHacerClic: () -> Unit) {
+    val categoriaTecnica = objeto.categoria.lowercase()
+    
+    val (categoriaEnEspañol, emojiCategoria) = when (categoriaTecnica) {
+        "electronics" -> "Electrónicos" to "💻"
+        "documents" -> "Documentos" to "📄"
+        "keys" -> "Llaves" to "🔑"
+        "backpacks" -> "Mochilas" to "🎒"
+        "clothing" -> "Ropa" to "👕"
+        "others" -> "Otros" to "📦"
+        else -> objeto.categoria to "📦"
     }
 
     Card(
-        onClick = onClick,
+        onClick = alHacerClic,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -206,7 +211,7 @@ fun ItemCard(item: ItemDto, onClick: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = categoryEmoji,
+                    text = emojiCategoria,
                     style = MaterialTheme.typography.headlineSmall
                 )
             }
@@ -220,32 +225,33 @@ fun ItemCard(item: ItemDto, onClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = item.title,
+                        text = objeto.titulo,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = if (item.type == "found") "Encontrado" else "Buscando",
+                        text = if (objeto.tipo == "found") stringResource(R.string.status_found) 
+                               else stringResource(R.string.status_searching),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (item.type == "found") MaterialTheme.colorScheme.primary
+                        color = if (objeto.tipo == "found") MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.error
                     )
                 }
                 Text(
-                    text = item.category,
+                    text = categoriaEnEspañol,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = item.description,
+                    text = objeto.descripcion,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "📍 ${item.location}",
+                    text = "📍 ${objeto.ubicacion}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

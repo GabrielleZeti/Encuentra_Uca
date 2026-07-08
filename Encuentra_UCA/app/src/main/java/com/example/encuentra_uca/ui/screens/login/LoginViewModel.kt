@@ -2,60 +2,60 @@ package com.example.encuentra_uca.ui.screens.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.encuentra_uca.data.repository.AuthRepository
+import com.example.encuentra_uca.data.repository.RepositorioAutenticacion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class LoginUiState(
-    val email: String = "",
-    val password: String = "",
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isLoginSuccessful: Boolean = false
+data class EstadoUiInicioSesion(
+    val correo: String = "",
+    val contrasena: String = "",
+    val estaCargando: Boolean = false,
+    val mensajeError: String? = null,
+    val inicioSesionExitoso: Boolean = false
 )
 
-class LoginViewModel(
-    private val authRepository: AuthRepository
+class ViewModelInicioSesion(
+    private val repositorioAutenticacion: RepositorioAutenticacion
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+    private val _estadoUi = MutableStateFlow(EstadoUiInicioSesion())
+    val estadoUi: StateFlow<EstadoUiInicioSesion> = _estadoUi.asStateFlow()
 
-    fun onEmailChange(email: String) {
-        _uiState.value = _uiState.value.copy(email = email, errorMessage = null)
+    fun alCambiarCorreo(correo: String) {
+        _estadoUi.value = _estadoUi.value.copy(correo = correo, mensajeError = null)
     }
 
-    fun onPasswordChange(password: String) {
-        _uiState.value = _uiState.value.copy(password = password, errorMessage = null)
+    fun alCambiarContrasena(contrasena: String) {
+        _estadoUi.value = _estadoUi.value.copy(contrasena = contrasena, mensajeError = null)
     }
 
-    fun login() {
-        val email = _uiState.value.email
-        val password = _uiState.value.password
+    fun iniciarSesion() {
+        val correo = _estadoUi.value.correo
+        val contrasena = _estadoUi.value.contrasena
 
-        if (email.isBlank() || password.isBlank()) {
-            _uiState.value = _uiState.value.copy(errorMessage = "Completa todos los campos")
+        if (correo.isBlank() || contrasena.isBlank()) {
+            _estadoUi.value = _estadoUi.value.copy(mensajeError = "Completa todos los campos")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            _estadoUi.value = _estadoUi.value.copy(estaCargando = true, mensajeError = null)
 
-            val result = authRepository.login(email, password)
+            val resultado = repositorioAutenticacion.iniciarSesion(correo, contrasena)
 
-            result.fold(
+            resultado.fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isLoginSuccessful = true
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        inicioSesionExitoso = true
                     )
                 },
                 onFailure = { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Credenciales inválidas o error de conexión"
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        mensajeError = "Credenciales inválidas o error de conexión"
                     )
                 }
             )

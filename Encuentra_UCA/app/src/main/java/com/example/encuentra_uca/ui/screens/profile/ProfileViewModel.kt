@@ -2,44 +2,44 @@ package com.example.encuentra_uca.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.encuentra_uca.data.repository.AuthRepository
+import com.example.encuentra_uca.data.repository.RepositorioAutenticacion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class ProfileUiState(
-    val userName: String = "",
-    val userEmail: String = "",
-    val isLogoutSuccessful: Boolean = false
+data class EstadoUiPerfil(
+    val nombreUsuario: String = "",
+    val correoUsuario: String = "",
+    val cierreSesionExitoso: Boolean = false
 )
 
-class ProfileViewModel(
-    private val authRepository: AuthRepository
+class ViewModelPerfil(
+    private val repositorioAutenticacion: RepositorioAutenticacion
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ProfileUiState())
-    val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+    private val _estadoUi = MutableStateFlow(EstadoUiPerfil())
+    val estadoUi: StateFlow<EstadoUiPerfil> = _estadoUi.asStateFlow()
 
     init {
-        loadUserInfo()
+        cargarInformacionUsuario()
     }
 
-    private fun loadUserInfo() {
+    private fun cargarInformacionUsuario() {
         viewModelScope.launch {
-            authRepository.getUserInfo().collect { (name, email) ->
-                _uiState.value = _uiState.value.copy(
-                    userName = name,
-                    userEmail = email
+            repositorioAutenticacion.obtenerInformacionUsuario().collect { (nombre, correo) ->
+                _estadoUi.value = _estadoUi.value.copy(
+                    nombreUsuario = nombre,
+                    correoUsuario = correo
                 )
             }
         }
     }
 
-    fun logout() {
+    fun cerrarSesion() {
         viewModelScope.launch {
-            authRepository.logout()
-            _uiState.value = _uiState.value.copy(isLogoutSuccessful = true)
+            repositorioAutenticacion.cerrarSesion()
+            _estadoUi.value = _estadoUi.value.copy(cierreSesionExitoso = true)
         }
     }
 }

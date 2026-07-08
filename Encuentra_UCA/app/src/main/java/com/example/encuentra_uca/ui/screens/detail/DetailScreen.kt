@@ -34,47 +34,50 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.encuentra_uca.ui.AppViewModelFactory
+import com.example.encuentra_uca.R
+import com.example.encuentra_uca.ui.FabricaViewModelApp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(
-    itemId: Int,
-    viewModelFactory: AppViewModelFactory,
-    onBack: () -> Unit
+fun PantallaDetalle(
+    idObjeto: Int,
+    fabricaViewModel: FabricaViewModelApp,
+    alRegresar: () -> Unit
 ) {
-    val viewModel: DetailViewModel = viewModel(factory = viewModelFactory)
-    val uiState by viewModel.uiState.collectAsState()
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+    val viewModel: ViewModelDetalle = viewModel(factory = fabricaViewModel)
+    val estadoUi by viewModel.estadoUi.collectAsState()
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
 
-    LaunchedEffect(itemId) {
-        viewModel.loadItem(itemId)
+    LaunchedEffect(idObjeto) {
+        viewModel.cargarObjeto(idObjeto)
     }
 
-    LaunchedEffect(uiState.isDeleted) {
-        if (uiState.isDeleted) onBack()
+    LaunchedEffect(estadoUi.estaEliminado) {
+        if (estadoUi.estaEliminado) alRegresar()
     }
 
-    if (showDeleteDialog) {
+    if (mostrarDialogoEliminar) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Eliminar objeto") },
-            text = { Text("¿Estás seguro que deseas eliminar este objeto? Esta acción no se puede deshacer.") },
+            onDismissRequest = { mostrarDialogoEliminar = false },
+            title = { Text(stringResource(R.string.delete_dialog_title)) },
+            text = { Text(stringResource(R.string.delete_dialog_text)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showDeleteDialog = false
-                    viewModel.deleteItem()
+                    mostrarDialogoEliminar = false
+                    viewModel.eliminarObjeto()
                 }) {
-                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.action_confirm), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancelar")
+                TextButton(onClick = { mostrarDialogoEliminar = false }) {
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -83,38 +86,49 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Detalle del objeto") },
+                title = { Text(stringResource(R.string.detail_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = alRegresar) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver"
+                            contentDescription = stringResource(R.string.btn_back)
                         )
                     }
                 }
             )
         }
-    ) { paddingValues ->
+    ) { valoresRelleno ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(valoresRelleno)
         ) {
             when {
-                uiState.isLoading || uiState.isDeleting -> {
+                estadoUi.estaCargando || estadoUi.estaEliminando -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
-                uiState.errorMessage != null -> {
+                estadoUi.mensajeError != null -> {
                     Text(
-                        text = uiState.errorMessage ?: "",
+                        text = estadoUi.mensajeError ?: "",
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
-                uiState.item != null -> {
-                    val item = uiState.item!!
+                estadoUi.objeto != null -> {
+                    val objeto = estadoUi.objeto!!
+                    
+                    // Mapeo de categoría para mostrar en español
+                    val categoriaEnEspañol = when (objeto.categoria.lowercase()) {
+                        "electronics" -> "💻 Electrónicos"
+                        "documents" -> "📄 Documentos"
+                        "keys" -> "🔑 Llaves"
+                        "backpacks" -> "🎒 Mochilas"
+                        "clothing" -> "👕 Ropa"
+                        "others" -> "📦 Otros"
+                        else -> objeto.categoria
+                    }
 
                     Column(
                         modifier = Modifier
@@ -123,7 +137,7 @@ fun DetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = item.title,
+                            text = objeto.titulo,
                             style = MaterialTheme.typography.headlineMedium
                         )
 
@@ -137,7 +151,7 @@ fun DetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
-                                    text = item.category,
+                                    text = categoriaEnEspañol,
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -146,44 +160,48 @@ fun DetailScreen(
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                                 Text(
-                                    text = if (item.status == "available") "Disponible" else "Reclamado",
+                                    text = if (objeto.tipo == "found") stringResource(R.string.status_found) 
+                                           else stringResource(R.string.status_searching),
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
                             }
                         }
 
-                        InfoRow(label = "Descripción", value = item.description)
-                        InfoRow(label = "Ubicación", value = item.location)
-                        InfoRow(label = "Reportado por", value = item.foundByEmail)
+                        FilaInformacion(etiqueta = stringResource(R.string.label_description), valor = objeto.descripcion)
+                        FilaInformacion(etiqueta = stringResource(R.string.label_location), valor = objeto.ubicacion)
+                        FilaInformacion(etiqueta = stringResource(R.string.label_reported_by), valor = objeto.encontradoPorEmail)
 
                         // Botón contactar — solo si NO eres el dueño
-                        if (!uiState.isOwner) {
+                        if (!estadoUi.esPropietario) {
                             Button(
                                 onClick = {
                                     val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                        data = Uri.parse("mailto:${item.foundByEmail}")
-                                        putExtra(Intent.EXTRA_SUBJECT, "Objeto: ${item.title}")
-                                        putExtra(Intent.EXTRA_TEXT, "Hola, vi en Encuentra UCA que reportaste: ${item.title}. Me gustaría comunicarme contigo.")
+                                        data = Uri.parse("mailto:${objeto.encontradoPorEmail}")
+                                        putExtra(Intent.EXTRA_SUBJECT, "Consulta sobre: ${objeto.titulo}")
+                                        putExtra(Intent.EXTRA_TEXT, "Hola, te contacto por el objeto '${objeto.titulo}' publicado en Encuentra UCA...")
                                     }
-                                    context.startActivity(intent)
+                                    contexto.startActivity(Intent.createChooser(intent, "Contactar vía correo"))
                                 },
-                                modifier = Modifier.fillMaxWidth()
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF0078D4) // Azul Outlook
+                                ),
+                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                             ) {
-                                Text("📧 Contactar al reportante")
+                                Text("Contactar al publicador", color = Color.White)
                             }
                         }
 
                         // Botón eliminar — solo si eres el dueño
-                        if (uiState.isOwner) {
+                        if (estadoUi.esPropietario) {
                             Button(
-                                onClick = { showDeleteDialog = true },
+                                onClick = { mostrarDialogoEliminar = true },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.error
                                 ),
-                                modifier = Modifier.fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                             ) {
-                                Text("Eliminar objeto")
+                                Text("Borrar publicación")
                             }
                         }
                     }
@@ -194,15 +212,15 @@ fun DetailScreen(
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
+fun FilaInformacion(etiqueta: String, valor: String) {
     Column {
         Text(
-            text = label,
+            text = etiqueta,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = value,
+            text = valor,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(top = 2.dp)
         )

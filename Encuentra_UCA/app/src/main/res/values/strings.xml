@@ -1,3 +1,63 @@
 <resources>
-    <string name="app_name">Encuentra_UCA</string>
+    <string name="app_name">Encuentra UCA</string>
+
+    <!-- Login & Register -->
+    <string name="login_title">Encuentra UCA</string>
+    <string name="login_subtitle">Inicia sesión con tu correo institucional</string>
+    <string name="label_email">Correo institucional</string>
+    <string name="label_password">Contraseña</string>
+    <string name="label_confirm_password">Confirmar contraseña</string>
+    <string name="desc_show_password">Mostrar contraseña</string>
+    <string name="desc_hide_password">Ocultar contraseña</string>
+    <string name="btn_login">Iniciar sesión</string>
+    <string name="link_register">¿No tienes cuenta? Regístrate</string>
+    <string name="register_title">Crear cuenta</string>
+    <string name="register_subtitle">Usa tu correo institucional UCA</string>
+    <string name="label_full_name">Nombre completo</string>
+    <string name="btn_register">Registrarse</string>
+    <string name="link_login">¿Ya tienes cuenta? Inicia sesión</string>
+
+    <!-- Home -->
+    <string name="tab_found">🔍 Encontrados</string>
+    <string name="tab_lost">❓ Buscando</string>
+    <string name="menu_profile">Mi perfil</string>
+    <string name="btn_publish">Publicar objeto</string>
+    <string name="empty_items">No hay objetos reportados aún</string>
+    <string name="error_load_items">Error al cargar los objetos</string>
+    <string name="status_found">Encontrado</string>
+    <string name="status_searching">Buscando</string>
+
+    <!-- Detail -->
+    <string name="detail_title">Detalle del objeto</string>
+    <string name="btn_back">Volver</string>
+    <string name="label_description">Descripción</string>
+    <string name="label_location">Ubicación</string>
+    <string name="label_reported_by">Reportado por</string>
+    <string name="status_available">Disponible</string>
+    <string name="status_claimed">Reclamado</string>
+    <string name="btn_contact">📧 Contactar al reportante</string>
+    <string name="btn_delete">Eliminar objeto</string>
+    <string name="delete_dialog_title">Eliminar objeto</string>
+    <string name="delete_dialog_text">¿Estás seguro que deseas eliminar este objeto? Esta acción no se puede deshacer.</string>
+    <string name="action_confirm">Eliminar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="email_subject">Objeto: %1$s</string>
+    <string name="email_body">Hola, vi en Encuentra UCA que reportaste: %1$s. Me gustaría comunicarme contigo.</string>
+
+    <!-- Publish -->
+    <string name="publish_title">Publicar objeto</string>
+    <string name="label_object_name">Nombre del objeto</string>
+    <string name="label_publish_type">Tipo de publicación</string>
+    <string name="chip_found">🔍 Encontré algo</string>
+    <string name="chip_lost">❓ Perdí algo</string>
+    <string name="label_detailed_description">Descripción detallada</string>
+    <string name="label_category">Categoría</string>
+    <string name="label_place">Lugar</string>
+    <string name="btn_publish_action">Publicar</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="logout_title">Cerrar sesión</string>
+    <string name="logout_text">¿Estás seguro que deseas cerrar sesión?</string>
+    <string name="btn_logout">Cerrar sesión</string>
 </resources>

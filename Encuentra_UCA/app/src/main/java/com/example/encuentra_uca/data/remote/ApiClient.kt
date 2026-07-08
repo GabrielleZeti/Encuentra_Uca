@@ -9,8 +9,8 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 object ApiClient {
-    const val BASE_URL = "https://encuentrauca-production.up.railway.app"
-    val httpClient = HttpClient(Android) {
+    const val URL_BASE = "https://encuentrauca-production.up.railway.app"
+    val clienteHttp = HttpClient(Android) {
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true

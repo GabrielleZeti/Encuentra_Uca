@@ -4,36 +4,28 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [ItemEntity::class],
-    version = 2,
+    entities = [EntidadObjeto::class],
+    version = 4, // Incrementado a 4 para limpiar todos los datos locales previos
     exportSchema = false
 )
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun itemDao(): ItemDao
+abstract class BaseDeDatosApp : RoomDatabase() {
+    abstract fun daoObjeto(): DaoObjeto
 
     companion object {
         @Volatile
-        private var INSTANCE: AppDatabase? = null
+        private var INSTANCIA: BaseDeDatosApp? = null
 
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE items ADD COLUMN type TEXT NOT NULL DEFAULT 'found'")
-            }
-        }
-
-        fun getInstance(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
+        fun obtenerInstancia(contexto: Context): BaseDeDatosApp {
+            return INSTANCIA ?: synchronized(this) {
                 Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
+                    contexto.applicationContext,
+                    BaseDeDatosApp::class.java,
                     "encuentra_uca_db"
                 )
-                    .addMigrations(MIGRATION_1_2)
-                    .build().also { INSTANCE = it }
+                    .fallbackToDestructiveMigration(true)
+                    .build().also { INSTANCIA = it }
             }
         }
     }

@@ -12,43 +12,44 @@ import com.google.firebase.messaging.RemoteMessage
 
 class FcmService : FirebaseMessagingService() {
 
-    override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val title = remoteMessage.notification?.title ?: "Encuentra UCA"
-        val body = remoteMessage.notification?.body ?: "Nuevo objeto encontrado"
-        showNotification(title, body)
+    override fun onMessageReceived(mensajeRemoto: RemoteMessage) {
+        val titulo = mensajeRemoto.notification?.title ?: "Encuentra UCA"
+        val cuerpo = mensajeRemoto.notification?.body ?: "Nuevo objeto encontrado"
+        mostrarNotificacion(titulo, cuerpo)
     }
 
     override fun onNewToken(token: String) {
+        // Se puede implementar para registrar el token en el servidor si es necesario
     }
 
-    private fun showNotification(title: String, body: String) {
-        val channelId = "encuentra_uca_channel"
-        val notificationManager =
+    private fun mostrarNotificacion(titulo: String, cuerpo: String) {
+        val idCanal = "encuentra_uca_canal"
+        val gestorNotificaciones =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channel = NotificationChannel(
-            channelId,
+        val canal = NotificationChannel(
+            idCanal,
             "Encuentra UCA",
             NotificationManager.IMPORTANCE_DEFAULT
         )
-        notificationManager.createNotificationChannel(channel)
+        gestorNotificaciones.createNotificationChannel(canal)
 
-        val intent = Intent(this, MainActivity::class.java).apply {
+        val intencion = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
+        val intencionPendiente = PendingIntent.getActivity(
+            this, 0, intencion,
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(this, channelId)
+        val notificacion = NotificationCompat.Builder(this, idCanal)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(title)
-            .setContentText(body)
+            .setContentTitle(titulo)
+            .setContentText(cuerpo)
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(intencionPendiente)
             .build()
 
-        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        gestorNotificaciones.notify(System.currentTimeMillis().toInt(), notificacion)
     }
 }

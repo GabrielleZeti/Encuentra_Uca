@@ -2,8 +2,8 @@ package com.example.encuentra_uca.ui.screens.publish
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.encuentra_uca.data.local.TokenManager
-import com.example.encuentra_uca.data.remote.dto.CreateItemRequest
+import com.example.encuentra_uca.data.local.GestorToken
+import com.example.encuentra_uca.data.remote.dto.SolicitudCrearObjeto
 import com.example.encuentra_uca.data.repository.ItemRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,96 +11,116 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class PublishUiState(
-    val title: String = "",
-    val description: String = "",
-    val category: String = "",
-    val location: String = "",
-    val type: String = "found",
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val isPublishSuccessful: Boolean = false
+data class EstadoUiPublicar(
+    val titulo: String = "",
+    val descripcion: String = "",
+    val categoria: String = "",
+    val ubicacion: String = "",
+    val tipo: String = "found",
+    val estaCargando: Boolean = false,
+    val mensajeError: String? = null,
+    val publicacionExitosa: Boolean = false
 )
 
-class PublishViewModel(
+class ViewModelPublicar(
     private val itemRepository: ItemRepository,
-    private val tokenManager: TokenManager
+    private val gestorToken: GestorToken
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PublishUiState())
-    val uiState: StateFlow<PublishUiState> = _uiState.asStateFlow()
+    private val _estadoUi = MutableStateFlow(EstadoUiPublicar())
+    val estadoUi: StateFlow<EstadoUiPublicar> = _estadoUi.asStateFlow()
 
-    fun onTitleChange(title: String) {
-        _uiState.value = _uiState.value.copy(title = title, errorMessage = null)
+    fun alCambiarTitulo(titulo: String) {
+        _estadoUi.value = _estadoUi.value.copy(titulo = titulo, mensajeError = null)
     }
 
-    fun onDescriptionChange(description: String) {
-        _uiState.value = _uiState.value.copy(description = description, errorMessage = null)
+    fun alCambiarDescripcion(descripcion: String) {
+        _estadoUi.value = _estadoUi.value.copy(descripcion = descripcion, mensajeError = null)
     }
 
-    fun onCategoryChange(category: String) {
-        _uiState.value = _uiState.value.copy(category = category, errorMessage = null)
+    fun alCambiarCategoria(categoria: String) {
+        _estadoUi.value = _estadoUi.value.copy(categoria = categoria, mensajeError = null)
     }
 
-    fun onLocationChange(location: String) {
-        _uiState.value = _uiState.value.copy(location = location, errorMessage = null)
+    fun alCambiarUbicacion(ubicacion: String) {
+        _estadoUi.value = _estadoUi.value.copy(ubicacion = ubicacion, mensajeError = null)
     }
 
-    fun onTypeChange(type: String) {
-        _uiState.value = _uiState.value.copy(type = type)
+    fun alCambiarTipo(tipo: String) {
+        _estadoUi.value = _estadoUi.value.copy(tipo = tipo)
     }
 
-    fun publish() {
-        val state = _uiState.value
+    private fun mapearCategoriaAlServidor(categoria: String): String {
+        return when {
+            categoria.contains("Electrónicos") -> "electronics"
+            categoria.contains("Documentos") -> "documents"
+            categoria.contains("Llaves") -> "keys"
+            categoria.contains("Mochilas") -> "backpacks"
+            categoria.contains("Ropa") -> "clothing"
+            categoria.contains("Otros") -> "others"
+            else -> categoria.replace(Regex("[^\\p{L}\\s]"), "").trim().lowercase()
+        }
+    }
+
+    private fun mapearTipo(tipo: String): String {
+        return when (tipo.lowercase()) {
+            "encontré algo", "encontrado", "found" -> "found"
+            "perdí algo", "perdido", "lost" -> "lost"
+            else -> "found"
+        }
+    }
+
+    fun publicar() {
+        val estado = _estadoUi.value
 
         if (
-            state.title.isBlank() ||
-            state.description.isBlank() ||
-            state.category.isBlank() ||
-            state.location.isBlank()
+            estado.titulo.isBlank() ||
+            estado.descripcion.isBlank() ||
+            estado.categoria.isBlank() ||
+            estado.ubicacion.isBlank()
         ) {
-            _uiState.value = state.copy(errorMessage = "Completa todos los campos")
+            _estadoUi.value = estado.copy(mensajeError = "Completa todos los campos")
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(
-                isLoading = true,
-                errorMessage = null
+            _estadoUi.value = estado.copy(
+                estaCargando = true,
+                mensajeError = null
             )
 
-            val token = tokenManager.tokenFlow.first()
+            val token = gestorToken.flujoToken.first()
 
             if (token.isNullOrBlank()) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = "Sesion expirada, vuelve a iniciar sesión"
+                _estadoUi.value = _estadoUi.value.copy(
+                    estaCargando = false,
+                    mensajeError = "Sesión expirada, vuelve a iniciar sesión"
                 )
                 return@launch
             }
 
-            val result = itemRepository.createItem(
+            val resultado = itemRepository.crearObjeto(
                 token = token,
-                request = CreateItemRequest(
-                    title = state.title,
-                    description = state.description,
-                    category = state.category,
-                    location = state.location,
-                    type = state.type
+                solicitud = SolicitudCrearObjeto(
+                    titulo = estado.titulo,
+                    descripcion = estado.descripcion,
+                    categoria = mapearCategoriaAlServidor(estado.categoria),
+                    ubicacion = estado.ubicacion,
+                    tipo = mapearTipo(estado.tipo)
                 )
             )
 
-            result.fold(
+            resultado.fold(
                 onSuccess = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isPublishSuccessful = true
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        publicacionExitosa = true
                     )
                 },
                 onFailure = {
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Error al publicar el objeto"
+                    _estadoUi.value = _estadoUi.value.copy(
+                        estaCargando = false,
+                        mensajeError = "Error al publicar: ${it.message}"
                     )
                 }
             )

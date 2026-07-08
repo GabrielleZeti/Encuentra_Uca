@@ -32,30 +32,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.encuentra_uca.ui.AppViewModelFactory
+import com.example.encuentra_uca.R
+import com.example.encuentra_uca.ui.FabricaViewModelApp
 
 @Composable
-fun LoginScreen(
-    viewModelFactory: AppViewModelFactory,
-    onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+fun PantallaInicioSesion(
+    fabricaViewModel: FabricaViewModelApp,
+    alIniciarSesionConExito: () -> Unit,
+    alNavegarARegistro: () -> Unit
 ) {
-    val viewModel: LoginViewModel = viewModel(factory = viewModelFactory)
-    val uiState by viewModel.uiState.collectAsState()
+    val viewModel: ViewModelInicioSesion = viewModel(factory = fabricaViewModel)
+    val estadoUi by viewModel.estadoUi.collectAsState()
 
-    LaunchedEffect(uiState.isLoginSuccessful) {
-        if (uiState.isLoginSuccessful) {
-            onLoginSuccess()
+    LaunchedEffect(estadoUi.inicioSesionExitoso) {
+        if (estadoUi.inicioSesionExitoso) {
+            alIniciarSesionConExito()
         }
     }
 
-    var passwordVisible by remember { mutableStateOf(false) }
+    var contrasenaVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -66,7 +68,7 @@ fun LoginScreen(
     ) {
         Icon(
             imageVector = Icons.Default.Search,
-            contentDescription = "Logo Encuentra UCA",
+            contentDescription = stringResource(R.string.login_title),
             modifier = Modifier
                 .size(80.dp)
                 .background(
@@ -80,68 +82,68 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Encuentra UCA",
+            text = stringResource(R.string.login_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
 
         Text(
-            text = "Inicia sesión con tu correo institucional",
+            text = stringResource(R.string.login_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
         )
 
         OutlinedTextField(
-            value = uiState.email,
-            onValueChange = { if (it.length <= 50) viewModel.onEmailChange(it) },
-            label = { Text("Correo institucional") },
+            value = estadoUi.correo,
+            onValueChange = { if (it.length <= 50) viewModel.alCambiarCorreo(it) },
+            label = { Text(stringResource(R.string.label_email)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth()
         )
 
         OutlinedTextField(
-            value = uiState.password,
-            onValueChange = { if (it.length <= 30) viewModel.onPasswordChange(it) },
-            label = { Text("Contraseña") },
-            visualTransformation = if (passwordVisible) VisualTransformation.None
+            value = estadoUi.contrasena,
+            onValueChange = { if (it.length <= 30) viewModel.alCambiarContrasena(it) },
+            label = { Text(stringResource(R.string.label_password)) },
+            visualTransformation = if (contrasenaVisible) VisualTransformation.None
             else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
                     Icon(
-                        imageVector = if (passwordVisible) Icons.Default.Visibility
+                        imageVector = if (contrasenaVisible) Icons.Default.Visibility
                         else Icons.Default.VisibilityOff,
-                        contentDescription = if (passwordVisible) "Ocultar contraseña"
-                        else "Mostrar contraseña"
+                        contentDescription = if (contrasenaVisible) stringResource(R.string.desc_hide_password)
+                        else stringResource(R.string.desc_show_password)
                     )
                 }
             },
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
         )
 
-        if (uiState.errorMessage != null) {
+        if (estadoUi.mensajeError != null) {
             Text(
-                text = uiState.errorMessage ?: "",
+                text = estadoUi.mensajeError ?: "",
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
 
         Button(
-            onClick = { viewModel.login() },
-            enabled = !uiState.isLoading,
+            onClick = { viewModel.iniciarSesion() },
+            enabled = !estadoUi.estaCargando,
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         ) {
-            if (uiState.isLoading) {
+            if (estadoUi.estaCargando) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp))
             } else {
-                Text("Iniciar sesión")
+                Text(stringResource(R.string.btn_login))
             }
         }
 
-        TextButton(onClick = onNavigateToRegister) {
-            Text("¿No tienes cuenta? Regístrate")
+        TextButton(onClick = alNavegarARegistro) {
+            Text(stringResource(R.string.link_register))
         }
     }
 }

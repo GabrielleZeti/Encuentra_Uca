@@ -1,7 +1,7 @@
 package com.example.encuentra_uca.data.remote
 
-import com.example.encuentra_uca.data.remote.dto.CreateItemRequest
-import com.example.encuentra_uca.data.remote.dto.ItemDto
+import com.example.encuentra_uca.data.remote.dto.SolicitudCrearObjeto
+import com.example.encuentra_uca.data.remote.dto.ObjetoDto
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -12,30 +12,30 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 
 
-class ItemsApiService {
-    private val client = ApiClient.httpClient
-    private val baseUrl = ApiClient.BASE_URL
+class ServicioApiObjetos {
+    private val cliente = ApiClient.clienteHttp
+    private val urlBase = ApiClient.URL_BASE
 
-    suspend fun getItems(category: String? = null, type: String = "found"): List<ItemDto> {
-        var url = "$baseUrl/items?type=$type"
-        if (category != null) url += "&category=$category"
-        return client.get(url).body()
+    suspend fun obtenerObjetos(categoria: String? = null, tipo: String = "found"): List<ObjetoDto> {
+        var url = "$urlBase/items?type=$tipo"
+        if (categoria != null) url += "&category=$categoria"
+        return cliente.get(url).body()
     }
 
-    suspend fun getItemById(id: Int): ItemDto {
-        return client.get("$baseUrl/items/$id").body()
+    suspend fun obtenerObjetoPorId(id: Int): ObjetoDto {
+        return cliente.get("$urlBase/items/$id").body()
     }
 
-    suspend fun createItem(token: String, request: CreateItemRequest): ItemDto {
-        return client.post("$baseUrl/items") {
+    suspend fun crearObjeto(token: String, solicitud: SolicitudCrearObjeto): ObjetoDto {
+        return cliente.post("$urlBase/items") {
             contentType(ContentType.Application.Json)
             header("Authorization", "Bearer $token")
-            setBody(request)
+            setBody(solicitud)
         }.body()
     }
 
-    suspend fun deleteItem(token: String, id: Int) {
-        client.delete("$baseUrl/items/$id") {
+    suspend fun eliminarObjeto(token: String, id: Int) {
+        cliente.delete("$urlBase/items/$id") {
             header("Authorization", "Bearer $token")
         }
     }
