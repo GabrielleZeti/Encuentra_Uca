@@ -41,6 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.encuentra_uca.R
 import com.example.encuentra_uca.ui.FabricaViewModelApp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
 
 @Composable
 fun PantallaInicioSesion(
@@ -66,17 +69,12 @@ fun PantallaInicioSesion(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Default.Search,
-            contentDescription = stringResource(R.string.login_title),
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Logo Encuentra UCA",
             modifier = Modifier
-                .size(80.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = RoundedCornerShape(20.dp)
-                )
-                .padding(16.dp),
-            tint = MaterialTheme.colorScheme.primary
+                .size(160.dp)
+                .clip(RoundedCornerShape(24.dp))
         )
 
         Spacer(modifier = Modifier.height(16.dp))
